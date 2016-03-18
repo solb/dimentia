@@ -51,23 +51,27 @@ This example from \Cref{code:example1} comes from a competitive-programming even
 
 We propose a static bug detection method that uses dimensional analysis. The method is purely non-parametric and doesn't require any additional annotation from the programmer. While such a dimensional bugs can often be found easily with unit testing, there are certain scenarios where we believe our method can be useful: \textit{i)} in cases where unit-tests don't cover all code paths or where the unit-test use trivial values for (0 or 1) for dimensional variables \textit{ii)} in the context of competitive programming for fast static bug detection.
 
+% course scope
 The approach is static (compiler-assisted) and is useful for debugging. Therefore we believe it is well within the scope of the 15-745 course.
 
 Before we describe the methodology of the method itself, it is worth mentioning that such a dimensional analysis is a fairly novel approach. The closest prior art we were able to find are ???? \cite{hilfinger1988ada}. % dimensional annotation such as 
 
+\colorbox{yellow}{TODO: find prior art}
 
-
-% how it pertains to the course
-
+Below, we provide our goals for this project. If the problem is more challenging than we expect, we will only complete the 75\% goals; if the project is roughly as challenging as we expect, then we will complete some subset of the 100\% goals; and, if we make progress at a quicker rate than anticipated, we will consider some of the 125\% goals.
 \begin{description}
-\item [75\% goal] wrong mod detection
-\item [100\% goal] working dimensional analysis and useful debugging output
-\item [125\% goal] practical framework and find bugs in real software
+\item [75\% goal] If the dimensional analysis proves too hard or produces too many false-positives to be useful we will consider a reduced-scope problem of ``mod-consistency-detection''. Basically, each time a variable stores a value that modulo some $P$, we are to expect that this variable will always contain some value calculated modulo $P$. If it appears this is not the case, we issue a warning. This problem can be viewed not only as a semantic bug detection, but also as a dimensional analysis problem if we consider ``int modulo P'' as a separate type.
+
+\item [100\% goal] We would like to have a working dimensional analysis tool that will produce useful debugging output when given as input a contest problem with a dimensional analysis bug. Additionally, if the framework appears too-impractical, we might consider adding some programmer-annotation tools to help guide the analysis. 
+
+\item [125\% goal] As our most ambitious goal, we will try to design a practical framework that could be fed mature software codebases and have a reasonable output.
 \end{description}
 
 \section{Project Timeline}
 
 \section{Experiments and Evaluation}
+
+As a evaluation method we are considering downloading a vast amount of source codes from open competitive programming sites like \texttt{codeforces.com} and finding dimensional bugs. Obvisouly, such evaluation will require a lot of manual labor of checking for false-positives and it is not clear what is the probability that a random source code contains a dimensional-analysis bug. However, our hope is to find a nontrivial amount of bugs and present a case-study we use the tool to find them.
 
 \section{Outline of the Paper}
 
