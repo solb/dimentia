@@ -2,7 +2,9 @@
 \usepackage{amsmath}
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
+\usepackage{color}
 \usepackage{listings}
+\usepackage{cleveref}
 
 \newcommand{\s}[1]{\textcolor{red}{#1}}
 \newcommand{\m}[1]{\textcolor{green}{#1}}
@@ -18,7 +20,8 @@
   keywordstyle=\color{blue}\ttfamily,
   stringstyle=\color{red}\ttfamily,
   commentstyle=\color{green}\ttfamily,
-  morecomment=[l][\color{magenta}]{\#}
+  morecomment=[l][\color{magenta}]{\#},
+  moredelim=**[is][\color{red}]{@}{@}
 }
 
 \title{{\small 15-745: Optimizing Compilers for Modern Architectures} \\ Project Proposal}
@@ -27,18 +30,39 @@
 \begin{document}
 \maketitle
 
-\section{Motivating Example}
-
 \section{Introduction}
 
-% how it pertains to the course
+Logical bugs are a big source of programming errors and can be notoriously hard to catch. While there is no hope to detect all logical mistakes in source code, one might hope to design bug detection software to capture a specific type of probable bugs. To this end, we propose a static bug detection technique that uses dimensional analysis to flag possible programmer mistakes.
+
+Examine the C++ source code in \Cref{code:example1}. If we remove the statement ``\texttt{$/ sq\_dist(...)$}'' marked in red, the code contains a dimensional bug. To see the bug, it is important to know that the variables \texttt{v, g} and \texttt{pts[.]} hold 2D points. Let's denote the dimension of the unit distance of this 2D plane as $E$. It can be inferred that the dimension of \texttt{dot\_prod} is $E^2$. Without the statement in red, the dimension of \texttt{alpha} is also $E^2$. But this implies that \texttt{pts[i].x + alpha*v.x} will be adding together variables of dimension $E$ and $E^3$, a clear dimensional bug. The proposed method vows to catch such bugs.
+
+\begin{lstlisting}[label=code:example1,caption=Example of a dimensional bug]
+  double dot_prod = (g.x-pts[i].x)*v.x + (g.y-pts[i].y)*v.y;
+  double alpha = dot_prod @/ sq_dist(v, {0, 0})@;
+  if (...) {
+    Pt cand = {pts[i].x + alpha*v.x, pts[i].y + alpha*v.y};
+    ...
+  }
+\end{lstlisting}
+
+This example from \Cref{code:example1} comes from a competitive-programming event (edited for clarity) and this was the actual bug one of the authors made during the contest. % reference?
 
 \section{Scope and Variations}
 
+We propose a static bug detection method that uses dimensional analysis. The method is purely non-parametric and doesn't require any additional annotation from the programmer. While such a dimensional bugs can often be found easily with unit testing, there are certain scenarios where we believe our method can be useful: \textit{i)} in cases where unit-tests don't cover all code paths or where the unit-test use trivial values for (0 or 1) for dimensional variables \textit{ii)} in the context of competitive programming for fast static bug detection.
+
+The approach is static (compiler-assisted) and is useful for debugging. Therefore we believe it is well within the scope of the 15-745 course.
+
+Before we describe the methodology of the method itself, it is worth mentioning that such a dimensional analysis is a fairly novel approach. The closest prior art we were able to find are ???? \cite{hilfinger1988ada}. % dimensional annotation such as 
+
+
+
+% how it pertains to the course
+
 \begin{description}
-\item [75\% goal] bla
-\item [100\% goal] bla
-\item [125\% goal] bla
+\item [75\% goal] wrong mod detection
+\item [100\% goal] working dimensional analysis and useful debugging output
+\item [125\% goal] practical framework and find bugs in real software
 \end{description}
 
 \section{Project Timeline}
@@ -47,6 +71,9 @@
 
 \section{Outline of the Paper}
 
-% references
+%%%%%%%%%%%%%%%%%%%%%%%% references %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{abbrv}
+\bibliography{refs}
 
 \end{document}

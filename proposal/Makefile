@@ -6,6 +6,9 @@ all: $(PDFS)
 %.pdf: %.tex
 	mkdir -p build
 	pdflatex -output-directory build/ $<
+	bibtex build/*.aux
+	pdflatex -output-directory build/ $<
+	pdflatex -output-directory build/ $<
 	cp build/*.pdf .
 
 clean:
