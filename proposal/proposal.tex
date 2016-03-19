@@ -67,7 +67,37 @@ Below, we provide our goals for this project. If the problem is more challenging
 \item [125\% goal] As our most ambitious goal, we will try to design a practical framework that could be fed mature software codebases and have a reasonable output.
 \end{description}
 
-\section{Project Timeline}
+\section{Resources and Project Timeline}
+
+We plan to create a proof-of-concept implementation in the form of one or more analysis passes for the LLVM compiler framework; specifically, we intend to operate on LLVM IR in the hopes of keeping the code applicable to multiple languages.
+That said, for the purposes of this course, we only intend to test either C or C++, leaving support for other languages as future work.
+
+Because the LLVM bytecode uses SSA form, each variable in the high-level language maps to a group of registers.
+Our analysis requires treating such a register pool as a single logical storage area; for this reason, we'll need access to some information from the compiler frontend.
+Fortunately, such register associations are part of the information a debugger needs when stepping through code at runtime, so we intend to make use of debugging annotations created by the frontend.
+This debugging information will also be useful for another reason: once we've detected a possible semantic bug, we'll want to report information---probably including the variable name and relevant line numbers---to the user.
+
+As a competitive programmer, Goran has more an extensive dataset of programs with a wide range of bugs, several of which exhibit the kinds of errors we're interested in.
+At the beginning of the project, he can be collecting real code samples and generating trivial tests to produce datasets to aid with development and use for evaluation.
+Simultaneously, Sol will be able to investigate the LLVM debugging annotations and begin using them to associate related registers.
+
+\begin{tabular}{c | l}
+Week of & Task \\
+\hline
+3/21 & Become familiar with LLVM IR debugging information, \\
+& Finish collecting basic test/evaluation dataset and try the algorithm out by hand \\
+3/28 & Be able to group registers by variable and represent variables' dimensionalities, \\
+& Enumerate rules for updating dimensionalities based on the arithmetic operations present \\
+4/4 & Be able to partially analyze toy examples and detect obvious dimensionality mismatches \\
+& Start to get a sense of the false negative/false positive rate \\
+4/11 & \textbf{Milestone report due.}, Continue development, \\
+& Develop basic heuristics to prune false positives if needed \\
+4/18 & Achieve enough functionality to be able to run on arbitrary code samples, \\
+& Work on presenting suspected errors reasonably to the user \\
+4/25 & \textbf{Poster session at end of week.} Experiment on our full dataset, Prepare poster, and \\
+& Perform a case study in actually debugging unfamiliar code with the tool \\
+5/2 & \textbf{Final report due.} Produce final report
+\end{tabular}
 
 \section{Experiments and Evaluation}
 
