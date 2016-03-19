@@ -3,6 +3,8 @@ PDFS=$(patsubst %.tex,%.pdf,$(TEXS))
 
 all: $(PDFS)
 
+proposal.pdf: refs.bib
+
 %.pdf: %.tex
 	mkdir -p build
 	pdflatex -output-directory build/ $<
