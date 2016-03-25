@@ -1,4 +1,9 @@
 build/
 *.aux
+*.bc
+*.ll
 *.log
+*.o
 *.pdf
+*.s
+*.so
