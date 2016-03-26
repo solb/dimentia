@@ -1,7 +1,9 @@
 #include "TraceVariables.h"
 
+#include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IntrinsicInst.h>
+#include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
 #include <cassert>
 
@@ -15,6 +17,7 @@ using llvm::dyn_cast;
 using llvm::Function;
 using llvm::Instruction;
 using llvm::isa;
+using llvm::Module;
 using llvm::RegisterPass;
 using llvm::Value;
 using std::unordered_map;
@@ -37,6 +40,12 @@ bool TraceVariables::runOnFunction(Function &fun) {
 				locals.emplace(key, *annot);
 			}
 
+	return false;
+}
+
+bool TraceVariables::doFinalization(Module &mod) {
+	for(std::pair<Value *const, DbgInfoIntrinsic &> &each : locals)
+		llvm::outs() << "Value {" << *each.first << "} references variable {" << *varOf(each.second) << "}\n";
 	return false;
 }
 

@@ -21,6 +21,7 @@ public:
 	TraceVariables();
 
 	bool runOnFunction(llvm::Function &) override;
+	bool doFinalization(llvm::Module &) override;
 
 private:
 	static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
