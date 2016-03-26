@@ -24,7 +24,9 @@ using llvm::isa;
 using llvm::MDNode;
 using llvm::Module;
 using llvm::NamedMDNode;
+using llvm::PHINode;
 using llvm::RegisterPass;
+using llvm::Use;
 using llvm::Value;
 using std::unordered_map;
 
@@ -68,6 +70,19 @@ bool TraceVariables::runOnFunction(Function &fun) {
 				assert(!locals.count(key));
 				locals.emplace(key, *varOf(*annot));
 			}
+
+	for(BasicBlock &block : fun.getBasicBlockList())
+		for(Instruction &inst : block.getInstList())
+			if(PHINode *phi = dyn_cast<PHINode>(&inst))
+				for(Use &use : phi->operands())
+					if(locals.count(&*use)) {
+						DILocalVariable &var = locals.at(&*use);
+						if(locals.count(phi)) {
+							assert(&locals.at(phi) == &var);
+							continue;
+						}
+						locals.emplace(phi, var);
+					}
 
 	return false;
 }
