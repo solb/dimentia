@@ -52,9 +52,6 @@ bool TraceVariables::doInitialization(Module &mod) {
 				globals.emplace(key, *var);
 			}
 
-	for(std::pair<Value *const, DIGlobalVariable &> &each : globals)
-		llvm::outs() << "Value {" << *each.first << "} references variable {" << each.second << "}\n";
-
 	return false;
 }
 
