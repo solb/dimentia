@@ -12,12 +12,17 @@ using llvm::Constant;
 using llvm::DbgDeclareInst;
 using llvm::DbgInfoIntrinsic;
 using llvm::DbgValueInst;
+using llvm::DICompileUnit;
+using llvm::DIGlobalVariable;
 using llvm::DILocalVariable;
 using llvm::dyn_cast;
+using llvm::errs;
 using llvm::Function;
 using llvm::Instruction;
 using llvm::isa;
+using llvm::MDNode;
 using llvm::Module;
+using llvm::NamedMDNode;
 using llvm::RegisterPass;
 using llvm::Value;
 using std::unordered_map;
@@ -26,6 +31,26 @@ char TraceVariables::ID = 0;
 
 TraceVariables::TraceVariables() :
 	FunctionPass(ID) {}
+
+bool TraceVariables::doInitialization(Module &mod) {
+	NamedMDNode *meta = mod.getNamedMetadata("llvm.dbg.cu");
+	if(!meta) {
+		errs() << "ERROR: No compilation unit metadata found.  Did you compile with debugging symbols?\n";
+		assert(false);
+	}
+
+	for(MDNode *nod : meta->operands())
+		if(DICompileUnit *comp = dyn_cast<DICompileUnit>(nod))
+			for(DIGlobalVariable *var : comp->getGlobalVariables()) {
+				Value *key = var->getVariable();
+				assert(key);
+
+				assert(!globals.count(key));
+				globals.emplace(key, *var);
+			}
+
+	return false;
+}
 
 bool TraceVariables::runOnFunction(Function &fun) {
 	for(BasicBlock &block : fun.getBasicBlockList())
