@@ -25,7 +25,6 @@ public:
 
 	bool doInitialization(llvm::Module &) override;
 	bool runOnFunction(llvm::Function &) override;
-	bool doFinalization(llvm::Module &) override;
 
 	llvm::DIVariable *operator[](llvm::Value &);
 

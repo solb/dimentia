@@ -87,12 +87,6 @@ bool TraceVariables::runOnFunction(Function &fun) {
 	return false;
 }
 
-bool TraceVariables::doFinalization(Module &mod) {
-	for(std::pair<Value *const, DILocalVariable &> &each : locals)
-		llvm::outs() << "Value {" << *each.first << "} references variable {" << each.second << "}\n";
-	return false;
-}
-
 DIVariable *TraceVariables::operator[](Value &val) {
 	if(locals.count(&val))
 		return &locals.at(&val);
