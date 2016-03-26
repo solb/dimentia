@@ -15,6 +15,7 @@ using llvm::DbgValueInst;
 using llvm::DICompileUnit;
 using llvm::DIGlobalVariable;
 using llvm::DILocalVariable;
+using llvm::DIVariable;
 using llvm::dyn_cast;
 using llvm::errs;
 using llvm::Function;
@@ -75,6 +76,14 @@ bool TraceVariables::doFinalization(Module &mod) {
 	for(std::pair<Value *const, DbgInfoIntrinsic &> &each : locals)
 		llvm::outs() << "Value {" << *each.first << "} references variable {" << *varOf(each.second) << "}\n";
 	return false;
+}
+
+DIVariable *TraceVariables::operator[](Value &val) {
+	if(locals.count(&val))
+		return varOf(locals.at(&val));
+	if(globals.count(&val))
+		return &globals.at(&val);
+	return NULL;
 }
 
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {

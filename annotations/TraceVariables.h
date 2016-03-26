@@ -8,6 +8,7 @@ namespace llvm {
 class DbgInfoIntrinsic;
 class DIGlobalVariable;
 class DILocalVariable;
+class DIVariable;
 class Value;
 }
 
@@ -25,6 +26,8 @@ public:
 	bool doInitialization(llvm::Module &) override;
 	bool runOnFunction(llvm::Function &) override;
 	bool doFinalization(llvm::Module &) override;
+
+	llvm::DIVariable *operator[](llvm::Value &);
 
 private:
 	static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
