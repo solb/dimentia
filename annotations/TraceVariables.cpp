@@ -66,21 +66,21 @@ bool TraceVariables::runOnFunction(Function &fun) {
 					continue;
 
 				assert(!locals.count(key));
-				locals.emplace(key, *annot);
+				locals.emplace(key, *varOf(*annot));
 			}
 
 	return false;
 }
 
 bool TraceVariables::doFinalization(Module &mod) {
-	for(std::pair<Value *const, DbgInfoIntrinsic &> &each : locals)
-		llvm::outs() << "Value {" << *each.first << "} references variable {" << *varOf(each.second) << "}\n";
+	for(std::pair<Value *const, DILocalVariable &> &each : locals)
+		llvm::outs() << "Value {" << *each.first << "} references variable {" << each.second << "}\n";
 	return false;
 }
 
 DIVariable *TraceVariables::operator[](Value &val) {
 	if(locals.count(&val))
-		return varOf(locals.at(&val));
+		return &locals.at(&val);
 	if(globals.count(&val))
 		return &globals.at(&val);
 	return NULL;

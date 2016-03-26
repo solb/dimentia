@@ -18,7 +18,7 @@ public:
 
 private:
 	std::unordered_map<llvm::Value *, llvm::DIGlobalVariable &> globals;
-	std::unordered_map<llvm::Value *, llvm::DbgInfoIntrinsic &> locals;
+	std::unordered_map<llvm::Value *, llvm::DILocalVariable &> locals;
 
 public:
 	TraceVariables();
