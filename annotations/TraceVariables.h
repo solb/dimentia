@@ -14,23 +14,23 @@ class Value;
 
 class TraceVariables : public llvm::FunctionPass {
 public:
-	static char ID;
+  static char ID;
 
 private:
-	std::unordered_map<llvm::Value *, llvm::DIGlobalVariable &> globals;
-	std::unordered_map<llvm::Value *, llvm::DILocalVariable &> locals;
+  std::unordered_map<llvm::Value *, llvm::DIGlobalVariable &> globals;
+  std::unordered_map<llvm::Value *, llvm::DILocalVariable &> locals;
 
 public:
-	TraceVariables();
+  TraceVariables();
 
-	bool doInitialization(llvm::Module &) override;
-	bool runOnFunction(llvm::Function &) override;
+  bool doInitialization(llvm::Module &) override;
+  bool runOnFunction(llvm::Function &) override;
 
-	llvm::DIVariable *operator[](llvm::Value &);
+  llvm::DIVariable *operator[](llvm::Value &);
 
 private:
-	static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
-	static llvm::DILocalVariable *varOf(llvm::DbgInfoIntrinsic &);
+  static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
+  static llvm::DILocalVariable *varOf(llvm::DbgInfoIntrinsic &);
 };
 
 #endif
