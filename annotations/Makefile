@@ -12,6 +12,7 @@ all: GenerateEquations.so TraceVariables.so
 clean:
 	$(CLEAN) -fX
 
+GenerateEquations.o: GenerateEquations.h TraceVariables.h
 TraceVariables.o: TraceVariables.h
 
 %.so: %.o
