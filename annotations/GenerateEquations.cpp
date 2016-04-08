@@ -16,7 +16,6 @@ using llvm::Use;
 using llvm::Value;
 using std::pair;
 using std::string;
-using std::stringstream;
 
 #include "TraceVariables.h"
 
@@ -94,7 +93,6 @@ string GenerateEquations::describeVar(Value &val) const {
 
   DIVariable *var = (*vars)[val];
   if(var) {
-    //stm << var->getFile()->getFilename();
     string scope = var->getScope()->getName();
     if(scope.size())
       stm << scope << "::";

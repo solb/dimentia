@@ -29,7 +29,6 @@ public:
 
   bool runOnFunction(llvm::Function &) override;
 
-
 private:
   std::string describeVar(llvm::Value &) const;
 };
