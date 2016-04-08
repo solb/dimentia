@@ -14,6 +14,7 @@ using llvm::raw_string_ostream;
 using llvm::RegisterPass;
 using llvm::Use;
 using llvm::Value;
+using std::pair;
 using std::string;
 using std::stringstream;
 
@@ -22,15 +23,25 @@ using std::stringstream;
 char GenerateEquations::ID = 0;
 
 GenerateEquations::GenerateEquations() :
-  FunctionPass(ID), vars(nullptr) {}
+  FunctionPass(ID),
+  vars(nullptr),
+  idxToVal(),
+  valToIdx() {}
 
 void GenerateEquations::getAnalysisUsage(AnalysisUsage &info) const {
   info.addRequired<TraceVariables>();
 }
 
 bool GenerateEquations::runOnFunction(Function &fun) {
-  if(!vars)
+  if(!vars) {
     vars = &getAnalysis<TraceVariables>();
+    assert(!idxToVal.size());
+    idxToVal.reserve(vars->size());
+    for(const pair<Value *, DIVariable &> &mapping : *vars) {
+      valToIdx.emplace(mapping.first, idxToVal.size());
+      idxToVal.push_back(mapping.first);
+    }
+  }
 
   for(BasicBlock &block : fun.getBasicBlockList())
     for(Instruction &inst : block.getInstList())

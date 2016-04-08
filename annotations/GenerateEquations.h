@@ -3,6 +3,7 @@
 
 #include <llvm/Pass.h>
 #include <string>
+#include <unordered_map>
 
 namespace llvm {
 class Value;
@@ -15,7 +16,11 @@ public:
   static char ID;
 
 private:
+  typedef std::vector<llvm::Value *>::size_type idx_type;
+
   const TraceVariables *vars;
+  std::unordered_map<llvm::Value *, idx_type> valToIdx;
+  std::vector<llvm::Value *> idxToVal;
 
 public:
   GenerateEquations();
