@@ -38,6 +38,13 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         const char *operation = " - ";
 
         switch(inst.getOpcode()) {
+        case Instruction::Store: {
+          outs() << inst << '\n';
+          if(inst.getOperand(0) != inst.getOperand(1))
+            outs() << "deg(" << describeVar(*inst.getOperand(1)) << ") = deg(" << describeVar(*inst.getOperand(0)) << ")\n";
+          break;
+        }
+
         case Instruction::Add:
         case Instruction::FAdd:
         case Instruction::Sub:
