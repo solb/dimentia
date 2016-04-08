@@ -28,7 +28,12 @@ using llvm::PHINode;
 using llvm::RegisterPass;
 using llvm::Use;
 using llvm::Value;
+using std::advance;
+using std::distance;
+using std::pair;
 using std::unordered_map;
+
+const ssize_t TraceVariables::NOT_FOUND = -1;
 
 char TraceVariables::ID = 0;
 
@@ -84,8 +89,39 @@ bool TraceVariables::runOnFunction(Function &fun) {
   return false;
 }
 
+ssize_t TraceVariables::index(Value &val) const {
+  const_iterator it = symbs.find(&val);
+  return it != symbs.end() ? distance(begin(), it) : NOT_FOUND;
+}
+
 DIVariable *TraceVariables::operator[](Value &val) const {
   return symbs.count(&val) ? &symbs.at(&val) : nullptr;
+}
+
+pair<Value *, DIVariable &> TraceVariables::operator[](TraceVariables::size_type val) const {
+  const_iterator it = begin();
+  advance(it, val);
+  return *it;
+}
+
+TraceVariables::iterator TraceVariables::begin() {
+  return symbs.begin();
+}
+
+TraceVariables::const_iterator TraceVariables::begin() const {
+  return symbs.begin();
+}
+
+TraceVariables::iterator TraceVariables::end() {
+  return symbs.end();
+}
+
+TraceVariables::const_iterator TraceVariables::end() const {
+  return symbs.end();
+}
+
+TraceVariables::size_type TraceVariables::size() const {
+  return symbs.size();
 }
 
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {
