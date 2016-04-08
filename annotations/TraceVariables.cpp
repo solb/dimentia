@@ -89,7 +89,7 @@ DIVariable *TraceVariables::operator[](Value &val) const {
     return &locals.at(&val);
   if(globals.count(&val))
     return &globals.at(&val);
-  return NULL;
+  return nullptr;
 }
 
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {
@@ -97,7 +97,7 @@ Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {
     return decl->getAddress();
   if(DbgValueInst *val = dyn_cast<DbgValueInst>(&annot))
     return val->getValue();
-  return NULL;
+  return nullptr;
 }
 
 DILocalVariable *TraceVariables::varOf(DbgInfoIntrinsic &annot) {
@@ -105,7 +105,7 @@ DILocalVariable *TraceVariables::varOf(DbgInfoIntrinsic &annot) {
     return decl->getVariable();
   if(DbgValueInst *val = dyn_cast<DbgValueInst>(&annot))
     return val->getVariable();
-  return NULL;
+  return nullptr;
 }
 
 static RegisterPass<TraceVariables> X("tracevars", "Trace Variables", true, true);
