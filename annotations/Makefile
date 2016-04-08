@@ -6,7 +6,7 @@ CXXFLAGS := $(shell llvm-config-$(LLVERSION) --cxxflags) -UNDEBUG
 LDFLAGS := $(shell llvm-config-$(LLVERSION) --ldflags)
 
 .PHONY: all
-all: TraceVariables.so
+all: GenerateEquations.so TraceVariables.so
 
 .PHONY: clean
 clean:
