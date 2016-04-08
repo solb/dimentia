@@ -48,8 +48,8 @@ bool TraceVariables::doInitialization(Module &mod) {
         Value *key = var->getVariable();
         assert(key);
 
-        assert(!globals.count(key));
-        globals.emplace(key, *var);
+        assert(!symbs.count(key));
+        symbs.emplace(key, *var);
       }
 
   return false;
@@ -64,32 +64,28 @@ bool TraceVariables::runOnFunction(Function &fun) {
         if(isa<Constant>(key))
           continue;
 
-        assert(!locals.count(key));
-        locals.emplace(key, *varOf(*annot));
+        assert(!symbs.count(key));
+        symbs.emplace(key, *varOf(*annot));
       }
 
   for(BasicBlock &block : fun.getBasicBlockList())
     for(Instruction &inst : block.getInstList())
       if(PHINode *phi = dyn_cast<PHINode>(&inst))
         for(Use &use : phi->operands())
-          if(locals.count(&*use)) {
-            DILocalVariable &var = locals.at(&*use);
-            if(locals.count(phi)) {
-              assert(&locals.at(phi) == &var);
+          if(symbs.count(&*use)) {
+            DIVariable &var = symbs.at(&*use);
+            if(symbs.count(phi)) {
+              assert(&symbs.at(phi) == &var);
               continue;
             }
-            locals.emplace(phi, var);
+            symbs.emplace(phi, var);
           }
 
   return false;
 }
 
 DIVariable *TraceVariables::operator[](Value &val) const {
-  if(locals.count(&val))
-    return &locals.at(&val);
-  if(globals.count(&val))
-    return &globals.at(&val);
-  return nullptr;
+  return symbs.count(&val) ? &symbs.at(&val) : nullptr;
 }
 
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {

@@ -6,7 +6,6 @@
 
 namespace llvm {
 class DbgInfoIntrinsic;
-class DIGlobalVariable;
 class DILocalVariable;
 class DIVariable;
 class Value;
@@ -17,8 +16,7 @@ public:
   static char ID;
 
 private:
-  std::unordered_map<llvm::Value *, llvm::DIGlobalVariable &> globals;
-  std::unordered_map<llvm::Value *, llvm::DILocalVariable &> locals;
+  std::unordered_map<llvm::Value *, llvm::DIVariable &> symbs;
 
 public:
   TraceVariables();
