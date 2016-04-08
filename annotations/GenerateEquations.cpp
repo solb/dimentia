@@ -44,7 +44,8 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         case Instruction::FSub: {
           outs() << inst << '\n';
           for(Use &op : inst.operands())
-            outs() << "deg(" << describeVar(inst) << ") = deg(" << describeVar(*op) << ")\n";
+            if((*vars)[*op] != (*vars)[inst])
+              outs() << "deg(" << describeVar(inst) << ") = deg(" << describeVar(*op) << ")\n";
           break;
         }
 
