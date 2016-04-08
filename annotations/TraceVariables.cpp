@@ -84,7 +84,7 @@ bool TraceVariables::runOnFunction(Function &fun) {
   return false;
 }
 
-DIVariable *TraceVariables::operator[](Value &val) {
+DIVariable *TraceVariables::operator[](Value &val) const {
   if(locals.count(&val))
     return &locals.at(&val);
   if(globals.count(&val))

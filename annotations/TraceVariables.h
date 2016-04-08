@@ -26,7 +26,7 @@ public:
   bool doInitialization(llvm::Module &) override;
   bool runOnFunction(llvm::Function &) override;
 
-  llvm::DIVariable *operator[](llvm::Value &);
+  llvm::DIVariable *operator[](llvm::Value &) const;
 
 private:
   static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
