@@ -2,11 +2,13 @@
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
 
 using llvm::AnalysisUsage;
 using llvm::BasicBlock;
 using llvm::DIVariable;
+using llvm::format_decimal;
 using llvm::Function;
 using llvm::Instruction;
 using llvm::Module;
@@ -116,6 +118,16 @@ bool GenerateEquations::doFinalization(Module &mod) {
   for(vector<int> &row : eqns) {
     assert(row.size() <= cols);
     row.resize(cols);
+  }
+
+  vector<string> reprs(cols);
+  transform(idxToVal.begin(), idxToVal.end(), reprs.begin(), [this](Value *var){return describeVar(*var);});
+  for_each(reprs.begin(), reprs.end(), [this](string &desc){outs() << desc << ' ';});
+  outs() << '\n';
+  for(vector<int> &row : eqns) {
+    for(vector<int>::size_type ix = 0, sz = row.size(); ix < sz; ++ix)
+      outs() << format_decimal(row[ix], reprs[ix].size()) << ' ';
+    outs() << '\n';
   }
   return false;
 }
