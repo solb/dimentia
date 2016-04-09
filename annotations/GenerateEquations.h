@@ -29,6 +29,7 @@ public:
   void getAnalysisUsage(llvm::AnalysisUsage &) const override;
 
   bool runOnFunction(llvm::Function &) override;
+  bool doFinalization(llvm::Module &) override;
 
 private:
   static int &elem(std::vector<int> &, std::vector<int>::size_type);

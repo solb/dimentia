@@ -9,6 +9,7 @@ using llvm::BasicBlock;
 using llvm::DIVariable;
 using llvm::Function;
 using llvm::Instruction;
+using llvm::Module;
 using llvm::outs;
 using llvm::raw_string_ostream;
 using llvm::RegisterPass;
@@ -107,6 +108,15 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         }
         }
       }
+  return false;
+}
+
+bool GenerateEquations::doFinalization(Module &mod) {
+  idx_type cols = idxToVal.size();
+  for(vector<int> &row : eqns) {
+    assert(row.size() <= cols);
+    row.resize(cols);
+  }
   return false;
 }
 
