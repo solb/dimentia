@@ -16,6 +16,7 @@ using llvm::Use;
 using llvm::Value;
 using std::pair;
 using std::string;
+using std::vector;
 
 #include "TraceVariables.h"
 
@@ -44,12 +45,20 @@ bool GenerateEquations::runOnFunction(Function &fun) {
     for(Instruction &inst : block.getInstList())
       if(inst.getNumOperands() > 1) {
         const char *operation = " - ";
+        int subtrahend = 1;
 
         switch(inst.getOpcode()) {
         case Instruction::Store: {
           outs() << inst << '\n';
-          if(inst.getOperand(0) != inst.getOperand(1))
+
+          if(inst.getOperand(0) != inst.getOperand(1)) {
             outs() << "deg(" << describeVar(*inst.getOperand(1)) << ") = deg(" << describeVar(*inst.getOperand(0)) << ")\n";
+
+            vector<int> eqn;
+            elem(eqn, idx(*inst.getOperand(1))) = 1;
+            elem(eqn, idx(*inst.getOperand(0))) = -1;
+            eqns.push_back(move(eqn));
+          }
           break;
         }
 
@@ -58,31 +67,53 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         case Instruction::Sub:
         case Instruction::FSub: {
           outs() << inst << '\n';
+
           for(Use &op : inst.operands())
-            if((*vars)[*op] != (*vars)[inst])
+            if((*vars)[*op] != (*vars)[inst]) {
               outs() << "deg(" << describeVar(inst) << ") = deg(" << describeVar(*op) << ")\n";
+
+              vector<int> eqn;
+              elem(eqn, idx(inst)) = 1;
+              elem(eqn, idx(*op)) = -1;
+              eqns.push_back(move(eqn));
+            }
+
           break;
         }
 
         case Instruction::Mul:
         case Instruction::FMul:
           operation = " + ";
+          subtrahend = -1;
         case Instruction::UDiv:
         case Instruction::SDiv:
         case Instruction::FDiv: {
           outs() << inst << '\n';
+          vector<int> eqn;
+          elem(eqn, idx(inst)) = 1;
+
           outs() << "deg(" << describeVar(inst) << ")";
-          bool lhs = true;
+          bool subsequent = false;
           for(Use &op : inst.operands()) {
-            outs() << (lhs ? " = " : operation) << "deg(" << describeVar(*op) << ')';
-            lhs = false;
+            outs() << (!subsequent ? " = " : operation) << "deg(" << describeVar(*op) << ')';
+
+            elem(eqn, idx(*op)) = !subsequent ? -1 : subtrahend;
+            subsequent = true;
           }
           outs() << '\n';
+
+          eqns.push_back(move(eqn));
           break;
         }
         }
       }
   return false;
+}
+
+int &GenerateEquations::elem(std::vector<int> &v, std::vector<int>::size_type i) {
+  if(i >= v.size())
+    v.resize(i + 1);
+  return v[i];
 }
 
 GenerateEquations::idx_type GenerateEquations::idx(Value &val) {
@@ -104,13 +135,13 @@ string GenerateEquations::describeVar(Value &val) const {
   raw_string_ostream stm(str);
 
   DIVariable *var = (*vars)[val];
-  if(var) {
+  if(DIVariable *var = (*vars)[val]) {
     string scope = var->getScope()->getName();
     if(scope.size())
       stm << scope << "::";
     stm << var->getName();
   } else
-    stm << "UNKNOWN (" << val << ')';
+    stm << "(tmp)";
 
   stm.flush();
   return str;

@@ -21,6 +21,7 @@ private:
   const TraceVariables *vars;
   std::unordered_map<llvm::Value *, idx_type> valToIdx;
   std::vector<llvm::Value *> idxToVal;
+  std::vector<std::vector<int>> eqns;
 
 public:
   GenerateEquations();
@@ -30,6 +31,8 @@ public:
   bool runOnFunction(llvm::Function &) override;
 
 private:
+  static int &elem(std::vector<int> &, std::vector<int>::size_type);
+
   idx_type idx(llvm::Value &);
   llvm::Value *val(idx_type) const;
 
