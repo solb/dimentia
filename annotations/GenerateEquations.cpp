@@ -36,10 +36,8 @@ bool GenerateEquations::runOnFunction(Function &fun) {
     vars = &getAnalysis<TraceVariables>();
     assert(!idxToVal.size());
     idxToVal.reserve(vars->size());
-    for(const pair<Value *, DIVariable &> &mapping : *vars) {
-      valToIdx.emplace(mapping.first, idxToVal.size());
-      idxToVal.push_back(mapping.first);
-    }
+    for(const pair<Value *, DIVariable &> &mapping : *vars)
+      idx(*mapping.first);
   }
 
   for(BasicBlock &block : fun.getBasicBlockList())
@@ -85,6 +83,20 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         }
       }
   return false;
+}
+
+GenerateEquations::idx_type GenerateEquations::idx(Value &val) {
+  if(valToIdx.count(&val))
+    return valToIdx[&val];
+
+  idx_type ix = idxToVal.size();
+  valToIdx.emplace(&val, ix);
+  idxToVal.push_back(&val);
+  return ix;
+}
+
+Value *GenerateEquations::val(GenerateEquations::idx_type idx) const {
+  return idxToVal[idx];
 }
 
 string GenerateEquations::describeVar(Value &val) const {

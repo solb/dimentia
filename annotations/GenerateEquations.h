@@ -30,6 +30,9 @@ public:
   bool runOnFunction(llvm::Function &) override;
 
 private:
+  idx_type idx(llvm::Value &);
+  llvm::Value *val(idx_type) const;
+
   std::string describeVar(llvm::Value &) const;
 };
 
