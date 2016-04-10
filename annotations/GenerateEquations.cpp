@@ -120,6 +120,8 @@ bool GenerateEquations::doFinalization(Module &mod) {
     row.resize(cols);
   }
 
+  // add shit here
+
   vector<string> reprs(cols);
   transform(idxToVal.begin(), idxToVal.end(), reprs.begin(), [this](Value *var){return describeVar(*var);});
   for_each(reprs.begin(), reprs.end(), [this](string &desc){outs() << desc << ' ';});
