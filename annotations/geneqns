@@ -1,0 +1,4 @@
+#!/bin/sh
+
+readonly mydir="`dirname "$0"`"
+opt-3.7 -load "$mydir/TraceVariables.so" -load "$mydir/GenerateEquations.so" -geneqns -o /dev/null "$@"
