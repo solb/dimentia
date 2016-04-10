@@ -1,22 +1,8 @@
-#       
-# Makefile for building a program that calls a routine from
-# the CLAPACK Library
-#
-# Dr. Andrew J. Pounds
-# Departments of Chemistry and Computer Science
-# Mercer University
-#
-# November 2004
-#
-
-#svd:
-#	$(CC) svd.cpp -o svd -lblas -llapack
-
 all: dgesv svd
 
-CC=clang
+CC=clang++
 LDFLAGS=-lblas -llapack
-CFLAGS=
+CFLAGS=-std=c++11
 
 dgesv: dgesv.cpp
 	$(CC) $< -o $@ $(LDFLAGS) $(CFLAGS)
