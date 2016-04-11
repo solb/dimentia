@@ -1,6 +1,7 @@
 TEXS=$(wildcard *.tex)
 PDFS=$(patsubst %.tex,%.pdf,$(TEXS))
 
+.PHONY: all
 all: $(PDFS)
 
 proposal.pdf: refs.bib
@@ -17,6 +18,7 @@ build/%.aux: %.tex
 %.bbl: build/%.aux
 	bibtex $<
 
+.PHONY: clean
 clean:
 	rm -rf *.aux *.log _region_* *.snm *.nav *.out *.toc
 	rm -rf build/
