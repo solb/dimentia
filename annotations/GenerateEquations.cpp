@@ -5,6 +5,8 @@
 #include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include "TraceVariables.h"
+
 using llvm::AnalysisUsage;
 using llvm::BasicBlock;
 using llvm::DIVariable;
@@ -17,19 +19,56 @@ using llvm::raw_string_ostream;
 using llvm::RegisterPass;
 using llvm::Use;
 using llvm::Value;
+using std::hash;
 using std::pair;
 using std::string;
+using std::unordered_map;
 using std::vector;
 
-#include "TraceVariables.h"
+namespace geneqns {
+namespace compare {
+template<>
+class equals<Value *> {
+private:
+  const TraceVariables &vs;
+
+public:
+  explicit equals(const TraceVariables &vs) : vs(vs) {}
+  bool operator()(Value *x, Value *y) const {return vs[*x] == vs[*y];}
+};
+
+template<>
+class hashes<Value *> {
+private:
+  const TraceVariables &vs;
+  const hash<DIVariable *> hs;
+
+public:
+  explicit hashes(const TraceVariables &vs) : vs(vs), hs() {}
+  size_t operator()(Value *x) const {return hs(vs[*x]);}
+};
+}
+}
+
+using geneqns::compare::equals;
+using geneqns::compare::hashes;
+
+#define BUCKET_FACTOR 2
 
 char GenerateEquations::ID = 0;
 
 GenerateEquations::GenerateEquations() :
   FunctionPass(ID),
   vars(nullptr),
-  idxToVal(),
-  valToIdx() {}
+  valToIdx(nullptr),
+  idxToVal(nullptr) {}
+
+GenerateEquations::~GenerateEquations() {
+  if(idxToVal)
+    delete idxToVal;
+  if(valToIdx)
+    delete valToIdx;
+}
 
 void GenerateEquations::getAnalysisUsage(AnalysisUsage &info) const {
   info.addRequired<TraceVariables>();
@@ -38,8 +77,10 @@ void GenerateEquations::getAnalysisUsage(AnalysisUsage &info) const {
 bool GenerateEquations::runOnFunction(Function &fun) {
   if(!vars) {
     vars = &getAnalysis<TraceVariables>();
-    assert(!idxToVal.size());
-    idxToVal.reserve(vars->size());
+    equals<Value *> vars_eq(*vars);
+    hashes<Value *> vars_hs(*vars);
+    valToIdx = new unordered_map<Value *, idx_type, hashes<Value *>, equals<Value *>>(BUCKET_FACTOR * vars->uniq(), vars_hs, vars_eq);
+    idxToVal = new vector<Value *>(vars->size());
     for(const pair<Value *, DIVariable &> &mapping : *vars)
       idx(*mapping.first);
   }
@@ -114,7 +155,7 @@ bool GenerateEquations::runOnFunction(Function &fun) {
 }
 
 bool GenerateEquations::doFinalization(Module &mod) {
-  idx_type cols = idxToVal.size();
+  idx_type cols = idxToVal->size();
   for(vector<int> &row : eqns) {
     assert(row.size() <= cols);
     row.resize(cols);
@@ -123,7 +164,7 @@ bool GenerateEquations::doFinalization(Module &mod) {
   // add shit here
 
   vector<string> reprs(cols);
-  transform(idxToVal.begin(), idxToVal.end(), reprs.begin(), [this](Value *var){return describeVar(*var);});
+  transform(idxToVal->begin(), idxToVal->end(), reprs.begin(), [this](Value *var){return describeVar(*var);});
   for_each(reprs.begin(), reprs.end(), [this](string &desc){outs() << desc << ' ';});
   outs() << '\n';
   for(vector<int> &row : eqns) {
@@ -141,17 +182,17 @@ int &GenerateEquations::elem(std::vector<int> &v, std::vector<int>::size_type i)
 }
 
 GenerateEquations::idx_type GenerateEquations::idx(Value &val) {
-  if(valToIdx.count(&val))
-    return valToIdx[&val];
+  if(valToIdx->count(&val))
+    return (*valToIdx)[&val];
 
-  idx_type ix = idxToVal.size();
-  valToIdx.emplace(&val, ix);
-  idxToVal.push_back(&val);
+  idx_type ix = idxToVal->size();
+  valToIdx->emplace(&val, ix);
+  idxToVal->push_back(&val);
   return ix;
 }
 
 Value *GenerateEquations::val(GenerateEquations::idx_type idx) const {
-  return idxToVal[idx];
+  return (*idxToVal)[idx];
 }
 
 string GenerateEquations::describeVar(Value &val) const {
