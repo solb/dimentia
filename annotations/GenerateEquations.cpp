@@ -141,7 +141,7 @@ bool GenerateEquations::runOnFunction(Function &fun) {
           for(Use &op : inst.operands()) {
             outs() << (!subsequent ? " = " : operation) << "deg(" << describeVar(*op) << ')';
 
-            elem(eqn, idx(*op)) = !subsequent ? -1 : subtrahend;
+            elem(eqn, idx(*op)) += !subsequent ? -1 : subtrahend;
             subsequent = true;
           }
           outs() << '\n';
