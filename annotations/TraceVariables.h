@@ -3,6 +3,7 @@
 
 #include <llvm/Pass.h>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace llvm {
 class DbgInfoIntrinsic;
@@ -19,6 +20,7 @@ public:
 
 private:
   std::unordered_map<llvm::Value *, llvm::DIVariable &> symbs;
+  std::unordered_set<llvm::DIVariable *> annts;
 
 public:
   typedef std::unordered_map<llvm::Value *, llvm::DIVariable &>::size_type size_type;
@@ -42,10 +44,13 @@ public:
   const_iterator end() const;
 
   size_type size() const;
+  size_type uniq() const;
 
 private:
   static llvm::Value *valOf(llvm::DbgInfoIntrinsic &);
   static llvm::DILocalVariable *varOf(llvm::DbgInfoIntrinsic &);
+
+  void remember(llvm::Value &, llvm::DIVariable &);
 };
 
 #endif

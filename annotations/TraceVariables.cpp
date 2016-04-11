@@ -54,7 +54,7 @@ bool TraceVariables::doInitialization(Module &mod) {
         assert(key);
 
         assert(!symbs.count(key));
-        symbs.emplace(key, *var);
+        remember(*key, *var);
       }
 
   return false;
@@ -70,7 +70,7 @@ bool TraceVariables::runOnFunction(Function &fun) {
           continue;
 
         assert(!symbs.count(key));
-        symbs.emplace(key, *varOf(*annot));
+        remember(*key, *varOf(*annot));
       }
 
   for(BasicBlock &block : fun.getBasicBlockList())
@@ -83,7 +83,7 @@ bool TraceVariables::runOnFunction(Function &fun) {
               assert(&symbs.at(phi) == &var);
               continue;
             }
-            symbs.emplace(phi, var);
+            remember(*phi, var);
           }
 
   return false;
@@ -124,6 +124,10 @@ TraceVariables::size_type TraceVariables::size() const {
   return symbs.size();
 }
 
+TraceVariables::size_type TraceVariables::uniq() const {
+  return annts.size();
+}
+
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {
   if(DbgDeclareInst *decl = dyn_cast<DbgDeclareInst>(&annot))
     return decl->getAddress();
@@ -138,6 +142,11 @@ DILocalVariable *TraceVariables::varOf(DbgInfoIntrinsic &annot) {
   if(DbgValueInst *val = dyn_cast<DbgValueInst>(&annot))
     return val->getVariable();
   return nullptr;
+}
+
+void TraceVariables::remember(Value &val, DIVariable &intr) {
+  symbs.emplace(&val, intr);
+  annts.insert(&intr);
 }
 
 static RegisterPass<TraceVariables> X("tracevars", "Trace Variables", true, true);
