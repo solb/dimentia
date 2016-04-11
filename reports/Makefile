@@ -5,13 +5,17 @@ all: $(PDFS)
 
 proposal.pdf: refs.bib
 
-%.pdf: %.tex
+build/%.aux: %.tex
 	mkdir -p build
 	pdflatex -output-directory build/ $<
-	bibtex build/*.aux
+
+%.pdf: %.tex %.bbl
 	pdflatex -output-directory build/ $<
 	pdflatex -output-directory build/ $<
 	cp build/*.pdf .
+
+%.bbl: build/%.aux
+	bibtex $<
 
 clean:
 	rm -rf *.aux *.log _region_* *.snm *.nav *.out *.toc
