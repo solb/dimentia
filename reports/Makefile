@@ -4,6 +4,7 @@ PDFS=$(patsubst %.tex,%.pdf,$(TEXS))
 .PHONY: all
 all: $(PDFS)
 
+milestone.pdf: refs.bib
 proposal.pdf: refs.bib
 
 build/%.aux: %.tex
