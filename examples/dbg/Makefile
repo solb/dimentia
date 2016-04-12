@@ -21,5 +21,4 @@ build/%.so: %.o
 	$(CXX) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 run::
-#	./geneqns < ../tests/annot2.ll
 	opt-$(LLVERSION) -load $(SOFILE) -my-dbg ../../tests/annot0.ll -o build/tmp

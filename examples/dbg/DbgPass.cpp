@@ -9,6 +9,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <cassert>
@@ -36,6 +37,14 @@ namespace llvm {
       TRACE("\n");
       BasicBlock* firstBB = &F.getBasicBlockList().front();
       Instruction* firstInst = &firstBB->getInstList().front();
+
+      TRACE("INTRINSIC");
+      for(BasicBlock &block : F.getBasicBlockList())
+        for(Instruction &inst : block.getInstList())
+          if(DbgInfoIntrinsic *annot = dyn_cast<DbgInfoIntrinsic>(&inst)) {
+            TRACE(inst _ *annot);
+          }
+
 
 
       return false;
