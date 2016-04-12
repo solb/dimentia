@@ -1,6 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{amsmath}
 \usepackage[margin=1in]{geometry}
+\usepackage{gensymb}
 \usepackage{graphicx}
 \usepackage{color}
 \usepackage{listings}
@@ -41,8 +42,16 @@ Unlike prior dimensional analysis contributions such as \cite{hilfinger1988ada},
 The price for this increased usability is that, instead of understanding what type of data a variable contains, our tool can only predict in what ways it \textit{might} be valid to use a particular variable.
 However, we believe this accuracy tradeoff is reasonable in certain scenarios; for instance, in competitive programming contexts where time is critically important, it can offer basic semantic checking with little or no extra effort.
 
-% TODO: Has anything changed based upon feedback from your proposal or as a result of your research so far?
-% TODO: Describe our rules for handling various types of instructions, along with any optimizations (e.g. ignoring reflexive equalities).
+Our experience thus far points to the approach's feasibility without any major changes.
+If $x$ is a register or variable and $\degree(x)$ is the degree of $x$, our implementation currently understands the following equivalences between classes of LLVM IR assembly instructions and registers/variables' relative degrees:
+\[y = \mathtt{load}\ x \implies \degree(y)\ =\ \degree(x)\]
+\[\mathtt{store}\ x,\ y \implies \degree(y)\ =\ \degree(x)\]
+\[z = \mathtt{add}\ x,\ y \implies \degree(z)\ =\ \degree(x)\ =\ \degree(y)\]
+\[z = \mathtt{sub}\ x,\ y \implies \degree(z)\ =\ \degree(x)\ =\ \degree(y)\]
+\[z = \mathtt{mul}\ x,\ y \implies \degree(z)\ =\ \degree(x)\ +\ \degree(y)\]
+\[z = \mathtt{div}\ x,\ y \implies \degree(z)\ =\ \degree(x)\ -\ \degree(y)\]
+
+Most notably, we still need to handle comparison instructions and add support for at least some non-scalar datatypes.
 
 \section{Goals and progress}
 
