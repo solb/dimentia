@@ -60,7 +60,7 @@ int main (){
   for (int i = 0; i < cols; ++i) {
     if (fabs(sigmas[i]) < eps) {
       for (int j = 0; j < cols; ++j)
-        if (fabs(A[i+j*cols]) > 0) {
+        if (fabs(Vt[i+j*cols]) > 0) {
           good.insert(j);
         }
     }

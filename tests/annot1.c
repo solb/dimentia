@@ -7,5 +7,6 @@ int main(void) {
     sum += opnd;
     prod *= opnd;
   }
+
   return 0;
 }

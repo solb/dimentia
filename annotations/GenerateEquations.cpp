@@ -7,6 +7,9 @@
 
 #include "TraceVariables.h"
 
+////////////////////////// TODO: remove this!
+#include <lapacke.h>
+
 using llvm::AnalysisUsage;
 using llvm::BasicBlock;
 using llvm::DIVariable;
@@ -24,6 +27,7 @@ using std::pair;
 using std::string;
 using std::unordered_map;
 using std::vector;
+using std::min;
 
 namespace geneqns {
 namespace compare {
@@ -154,6 +158,61 @@ bool GenerateEquations::runOnFunction(Function &fun) {
   return false;
 }
 
+vector<int> calcDimensionless(vector<std::vector<int>> eqns) {
+  int rows = eqns.size();
+  int cols = eqns[0].size();
+
+  char cN = 'N';
+  char cA = 'A';
+
+  double* A = new double[rows*cols];
+  double* sigmas = new double[rows+cols];
+  int work_sz = (rows+cols)*30;
+  double* work = new double[work_sz];
+  double* Vt = new double[cols*cols];
+  int ldvt = cols;
+  int info;
+
+  for (int i = 0; i < rows; ++i)
+    for (int j = 0; j < cols; ++j)
+      A[i+j*rows] = eqns[i][j];
+
+  dgesvd_(&cN, &cA, &rows, &cols, A, &rows,
+          sigmas, NULL, &rows, Vt, &ldvt, work, &work_sz, &info);
+  assert(info == 0);
+
+  for (int i = min(cols, rows); i < cols; ++i)
+    sigmas[i] = 0;
+
+  const double eps = 1e-9;
+  vector<int> dimensionless;
+  for (int j = 0; j < cols; ++j) {
+    bool good = false;
+    for (int i = 0; i < cols; ++i) {
+      if (fabs(sigmas[i]) < eps && fabs(Vt[i+j*cols]) > eps) {
+        good = true;
+      }
+    }
+    if (!good) {
+      dimensionless.push_back(j);
+      printf("dimensionless %d\n", j);
+    }
+  }
+
+  for (int i = 0; i < cols; ++i) {
+    for (int j = 0; j < cols; ++j)
+      printf("%5.2lf ", Vt[i+cols*j]);
+    printf("\n");
+  }
+
+  delete[] A;
+  delete[] sigmas;
+  delete[] work;
+  delete[] Vt;
+
+  return dimensionless;
+}
+
 bool GenerateEquations::doFinalization(Module &mod) {
   idx_type cols = idxToVal->size();
   for(vector<int> &row : eqns) {
@@ -161,6 +220,7 @@ bool GenerateEquations::doFinalization(Module &mod) {
     row.resize(cols);
   }
 
+  calcDimensionless(eqns);
   // add shit here
 
   vector<string> reprs(cols);

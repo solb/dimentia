@@ -4,6 +4,7 @@ CLEAN := git clean
 CXX := clang-$(LLVERSION)
 CXXFLAGS := $(shell llvm-config-$(LLVERSION) --cxxflags) -UNDEBUG
 LDFLAGS := $(shell llvm-config-$(LLVERSION) --ldflags)
+LDFLAGS := $(LDFLAGS) -lblas -llapack
 
 .PHONY: all
 all: GenerateEquations.so TraceVariables.so
@@ -17,3 +18,6 @@ TraceVariables.o: TraceVariables.h
 
 %.so: %.o
 	$(CXX) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+run::
+	./geneqns < ../tests/annot2.ll
