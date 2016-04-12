@@ -162,6 +162,18 @@ bool GenerateEquations::runOnFunction(Function &fun) {
           break;
         }
         }
+      } else if(inst.getOpcode() == Instruction::Load) {
+        outs() << inst << '\n';
+
+        assert(inst.getNumOperands());
+        if(&inst != inst.getOperand(0)) {
+          outs() << "deg(" << describeVar(inst) << ") = deg(" << describeVar(*inst.getOperand(0)) << ")\n";
+
+          vector<int> eqn;
+          elem(eqn, idx(inst)) = 1;
+          elem(eqn, idx(*inst.getOperand(0))) = -1;
+          eqns.push_back(move(eqn));
+        }
       }
   return false;
 }
