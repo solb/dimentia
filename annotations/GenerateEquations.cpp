@@ -266,8 +266,11 @@ string GenerateEquations::describeVar(Value &val) const {
     if(scope.size())
       stm << scope << "::";
     stm << var->getName();
-  } else
-    stm << "(tmp)";
+  } else {
+    stm << "(tmp:";
+    val.printAsOperand(stm, false);
+    stm << ')';
+  }
 
   stm.flush();
   return str;
