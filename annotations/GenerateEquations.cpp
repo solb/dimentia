@@ -38,7 +38,10 @@ private:
 
 public:
   explicit equals(const TraceVariables &vs) : vs(vs) {}
-  bool operator()(Value *x, Value *y) const {return vs[*x] == vs[*y];}
+  bool operator()(Value *x, Value *y) const {
+    DIVariable *intr_x = vs[*x], *intr_y = vs[*y];
+    return intr_x && intr_y ? intr_x == intr_y : x == y;
+  }
 };
 
 template<>
@@ -46,10 +49,14 @@ class hashes<Value *> {
 private:
   const TraceVariables &vs;
   const hash<DIVariable *> hs;
+  const hash<Value *> hv;
 
 public:
-  explicit hashes(const TraceVariables &vs) : vs(vs), hs() {}
-  size_t operator()(Value *x) const {return hs(vs[*x]);}
+  explicit hashes(const TraceVariables &vs) : vs(vs), hs(), hv() {}
+  size_t operator()(Value *x) const {
+    DIVariable *intr = vs[*x];
+    return intr ? hs(intr) : hv(x);
+  }
 };
 }
 }
