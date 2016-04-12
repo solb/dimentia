@@ -37,7 +37,7 @@
 Logical bugs are a big source of programming errors and can be notoriously hard to catch.
 While there is no hope of detecting all logical mistakes in source code, one can try to design specialized software to detect a specific class of probable bug.
 To this end, we propose a static bug detection technique that uses dimensional analysis to flag possible programmer mistakes.
-The technique examines variables that are related by arithmetic, assignment, and comparison operations and identifies \textit{semantic mismatches}, or places where incompatible variables (those with different dimensions, or \texttt{degrees}) become associated.
+The technique examines variables that are related by arithmetic, assignment, and comparison operations and identifies \textit{semantic mismatches}, or places where incompatible variables (those with different dimensions, or \textit{degrees}) become associated.
 
 Unlike prior dimensional analysis contributions such as \cite{hilfinger1988ada}, this method doesn't require the programmer to supply annotations.
 The price for this increased usability is that, instead of understanding what type of data a variable contains, our tool can only predict in what ways it \textit{might} be valid to use a particular variable.
