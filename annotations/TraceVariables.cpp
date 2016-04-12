@@ -48,7 +48,7 @@ bool TraceVariables::doInitialization(Module &mod) {
   }
 
   for(MDNode *nod : meta->operands())
-    if(DICompileUnit *comp = dyn_cast<DICompileUnit>(nod))
+    if(DICompileUnit *comp = dyn_cast<DICompileUnit>(nod)) // usually only DICompileUnit
       for(DIGlobalVariable *var : comp->getGlobalVariables()) {
         Value *key = var->getVariable();
         assert(key);

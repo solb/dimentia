@@ -203,14 +203,7 @@ vector<int> calcDimensionless(vector<std::vector<int>> eqns) {
     }
     if (!good) {
       dimensionless.push_back(j);
-      printf("dimensionless %d\n", j);
     }
-  }
-
-  for (int i = 0; i < cols; ++i) {
-    for (int j = 0; j < cols; ++j)
-      printf("%5.2lf ", Vt[i+cols*j]);
-    printf("\n");
   }
 
   delete[] A;
@@ -228,9 +221,6 @@ bool GenerateEquations::doFinalization(Module &mod) {
     row.resize(cols);
   }
 
-  calcDimensionless(eqns);
-  // add shit here
-
   vector<string> reprs(cols);
   transform(idxToVal->begin(), idxToVal->end(), reprs.begin(), [this](Value *var){return describeVar(*var);});
   for_each(reprs.begin(), reprs.end(), [this](string &desc){outs() << desc << ' ';});
@@ -240,6 +230,12 @@ bool GenerateEquations::doFinalization(Module &mod) {
       outs() << format_decimal(row[ix], reprs[ix].size()) << ' ';
     outs() << '\n';
   }
+
+
+  vector<int> badVars = calcDimensionless(eqns);
+  outs() << "# dimensionless = " << badVars.size() << "\n";
+  for (auto i : badVars) outs() << "dimensionless " << reprs[i] << "\n";
+
   return false;
 }
 

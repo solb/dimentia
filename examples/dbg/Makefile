@@ -6,20 +6,20 @@ CXXFLAGS := $(shell llvm-config-$(LLVERSION) --cxxflags) -UNDEBUG
 LDFLAGS := $(shell llvm-config-$(LLVERSION) --ldflags)
 LDFLAGS := $(LDFLAGS) -lblas -llapack
 
+SOFILE=build/DbgPass.so
+
 .PHONY: all
-all: GenerateEquations.so TraceVariables.so
+all: $(SOFILE)
 
 .PHONY: clean
 clean:
+	rm -rf build
 	$(CLEAN) -fX
 
-GenerateEquations.o: GenerateEquations.h TraceVariables.h
-TraceVariables.o: TraceVariables.h
-
-%.so: %.o
+build/%.so: %.o
+	mkdir -p $(@D)
 	$(CXX) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-INPUT=../tests/annot1.ll
 run::
-	cat $(INPUT:.ll=.c)
-	./geneqns < $(INPUT)
+#	./geneqns < ../tests/annot2.ll
+	opt-$(LLVERSION) -load $(SOFILE) -my-dbg ../../tests/annot0.ll -o build/tmp

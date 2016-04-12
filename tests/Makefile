@@ -6,12 +6,19 @@ OPT := opt-$(LLVERSION)
 
 CFLAGS := -std=c99 -g -O0 -Wall -Wextra -Wpedantic
 
+########
+
+C_SOURCES := $(wildcard *.c)
+
+.PHONY: all
+all: $(C_SOURCES:.c=.ll)
+
 .PHONY: help
 help:
 	@echo "USAGE: make testprog    - ELF executable"
 	@echo "       make testprog.BC - Unoptimized LLVM bitcode"
 	@echo "       make testprog.bc - mem2reg'd LLVM bitcode"
-	@echo "       make testprog.LL - Unoptimized LLVM IR assembly"
+	@echo "       make testprog.ull - Unoptimized LLVM IR assembly"
 	@echo "       make testprog.ll - mem2reg'd LLVM IR assembly"
 	@echo "       make testprog.s  - Assembly code"
 	@echo "       make testprog.o  - Object file"
@@ -29,10 +36,10 @@ clean:
 %.bc: %.BC
 	$(OPT) -mem2reg $< -o $@
 
-%.LL: %.c
+%.ull: %.c
 	$(CC) -S -emit-llvm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-%.ll: %.LL
+%.ll: %.ull
 	$(OPT) -S -mem2reg $< -o $@
 
 %.s: %.c

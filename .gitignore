@@ -2,6 +2,7 @@ build/
 *.aux
 *.bc
 *.ll
+*.ull
 *.log
 *.o
 *.pdf
