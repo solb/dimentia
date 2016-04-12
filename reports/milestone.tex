@@ -85,7 +85,7 @@ While we have this preliminary version working, there are a lot of interesting s
   \item array elements have the same degree (not handled)
 \end{itemize}
 
-Furthermore, after we find the dimensionless variables, we need to run a thorough filtering process becase of false-positives. We have not implemented them yet. However, here is a relevant list of heuristics that we might end up using:
+Furthermore, after we find the dimensionless variables, we need to run a thorough filtering process because of false-positives. We have not implemented them yet. However, here is a relevant list of heuristics that we might end up using:
 \begin{itemize}
   \item induction variables are almost always dimensionless and we should filter them from the results
   \item anything that is marked dimensionless directly by a induction variable (for instance, by adding it to a induction variable) is meant to be dimensionless, and should not be reported
@@ -117,7 +117,7 @@ Week of & Task \\
 \section{Evaluation Plan}
 
 As a evaluation method we are still considering downloading a vast amount of source codes from open competitive programming sites like \texttt{codeforces.com} and finding dimensional bugs.
-Obvisouly, such evaluation will require a lot of manual labor of checking for false-positives and it is not clear what is the probability that a random source code contains a dimensional-analysis bug. However, our hope is to find a nontrivial number of bugs and present a case study in which we use the tool to find them.
+Obviously, such evaluation will require a lot of manual labor of checking for false-positives and it is not clear what is the probability that a random source code contains a dimensional-analysis bug. However, our hope is to find a nontrivial number of bugs and present a case study in which we use the tool to find them.
 Specifically, we're interested in seeing the false positive rate, false negative rate, and applicability of our checker to the debugging efforts of a programmer unfamiliar with the code.
 
 Since we're still focused on correctness and only starting to think about false positives, the evaluation is yet to come.
