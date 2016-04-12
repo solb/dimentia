@@ -84,7 +84,8 @@ bool GenerateEquations::runOnFunction(Function &fun) {
     equals<Value *> vars_eq(*vars);
     hashes<Value *> vars_hs(*vars);
     valToIdx = new unordered_map<Value *, idx_type, hashes<Value *>, equals<Value *>>(BUCKET_FACTOR * vars->uniq(), vars_hs, vars_eq);
-    idxToVal = new vector<Value *>(vars->size());
+    idxToVal = new vector<Value *>();
+    idxToVal->reserve(vars->uniq());
     for(const pair<Value *, DIVariable &> &mapping : *vars)
       idx(*mapping.first);
   }
