@@ -18,8 +18,3 @@ TraceVariables.o: TraceVariables.h
 
 %.so: %.o
 	$(CXX) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-INPUT=../tests/annot1.ll
-run::
-	cat $(INPUT:.ll=.c)
-	./geneqns < $(INPUT)
