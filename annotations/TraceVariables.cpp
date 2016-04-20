@@ -22,6 +22,7 @@ using llvm::Function;
 using llvm::Instruction;
 using llvm::isa;
 using llvm::MDNode;
+using llvm::Metadata;
 using llvm::Module;
 using llvm::NamedMDNode;
 using llvm::PHINode;
@@ -65,8 +66,7 @@ bool TraceVariables::runOnFunction(Function &fun) {
     for(Instruction &inst : block.getInstList())
       if(DbgInfoIntrinsic *annot = dyn_cast<DbgInfoIntrinsic>(&inst)) {
         Value *key = valOf(*annot);
-        assert(key);
-        if(isa<Constant>(key))
+        if(!key || isa<Constant>(key))
           continue;
 
         assert(!symbs.count(key));
@@ -129,10 +129,21 @@ TraceVariables::size_type TraceVariables::uniq() const {
 }
 
 Value *TraceVariables::valOf(DbgInfoIntrinsic &annot) {
-  if(DbgDeclareInst *decl = dyn_cast<DbgDeclareInst>(&annot))
-    return decl->getAddress();
-  if(DbgValueInst *val = dyn_cast<DbgValueInst>(&annot))
-    return val->getValue();
+  Metadata *unused = nullptr;
+  if(DbgDeclareInst *decl = dyn_cast<DbgDeclareInst>(&annot)) {
+    if(Value *res = decl->getAddress())
+      return res;
+    unused = decl->getRawVariable();
+  } else if(DbgValueInst *val = dyn_cast<DbgValueInst>(&annot)) {
+    if(Value *res = val->getValue())
+      return res;
+    unused = val->getRawVariable();
+  }
+
+  if(unused)
+    errs() << "Encountered unused variable: " << *unused << '\n';
+  else
+    errs() << "Neither a declare nor a value inst: " << annot << '\n';
   return nullptr;
 }
 
