@@ -1,10 +1,12 @@
 LLVERSION := 3.7
 
 CC := clang-$(LLVERSION)
+CXX := clang++-$(LLVERSION)
 CLEAN := git clean
 OPT := opt-$(LLVERSION)
 
 CFLAGS := -std=c99 -g -O0 -Wall -Wextra -Wpedantic
+CXXFLAGS := -std=c++11 -g -O0 -Wall -Wextra -Wpedantic
 
 ########
 
@@ -38,6 +40,9 @@ clean:
 
 %.ull: %.c
 	$(CC) -S -emit-llvm $(CPPFLAGS) $(CFLAGS) $< -o $@
+
+%.ull: %.cpp
+	$(CXX) -S -emit-llvm $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.ll: %.ull
 	$(OPT) -S -mem2reg $< -o $@
