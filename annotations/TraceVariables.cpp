@@ -33,6 +33,7 @@ using std::advance;
 using std::distance;
 using std::pair;
 using std::unordered_map;
+using std::unordered_set;
 
 const ssize_t TraceVariables::NOT_FOUND = -1;
 
@@ -98,6 +99,10 @@ DIVariable *TraceVariables::operator[](Value &val) const {
   return symbs.count(&val) ? &symbs.at(&val) : nullptr;
 }
 
+const unordered_set<llvm::Value *> *TraceVariables::operator[](DIVariable &reverse) const {
+  return annts.count(&reverse) ? &annts.at(&reverse) : nullptr;
+}
+
 pair<Value *, DIVariable &> TraceVariables::operator[](TraceVariables::size_type val) const {
   const_iterator it = begin();
   advance(it, val);
@@ -157,7 +162,13 @@ DILocalVariable *TraceVariables::varOf(DbgInfoIntrinsic &annot) {
 
 void TraceVariables::remember(Value &val, DIVariable &intr) {
   symbs.emplace(&val, intr);
-  annts.insert(&intr);
+
+  if(annts.count(&intr))
+    annts[&intr].emplace(&val);
+  else {
+    unordered_set<Value *> vals = {&val};
+    annts.emplace(&intr, move(vals));
+  }
 }
 
 static RegisterPass<TraceVariables> X("tracevars", "Trace Variables", true, true);

@@ -20,7 +20,7 @@ public:
 
 private:
   std::unordered_map<llvm::Value *, llvm::DIVariable &> symbs;
-  std::unordered_set<llvm::DIVariable *> annts;
+  std::unordered_map<llvm::DIVariable *, std::unordered_set<llvm::Value *>> annts;
 
 public:
   typedef std::unordered_map<llvm::Value *, llvm::DIVariable &>::size_type size_type;
@@ -36,6 +36,7 @@ public:
 
   difference_type index(llvm::Value &) const;
   llvm::DIVariable *operator[](llvm::Value &) const;
+  const std::unordered_set<llvm::Value *> *operator[](llvm::DIVariable &) const;
   std::pair<llvm::Value *, llvm::DIVariable &> operator[](size_type) const;
 
   iterator begin();
