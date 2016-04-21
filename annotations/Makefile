@@ -13,6 +13,7 @@ all: GenerateEquations.so TraceVariables.so
 clean:
 	$(CLEAN) -fX
 
+DimensionalAnalysis.o: DimensionalAnalysis.h TraceVariablesNg.h
 GenerateEquations.o: GenerateEquations.h TraceVariables.h
 TraceVariables.o: TraceVariables.h
 TraceVariablesNg.o: TraceVariablesNg.h
