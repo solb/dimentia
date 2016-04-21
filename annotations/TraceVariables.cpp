@@ -70,7 +70,12 @@ bool TraceVariables::runOnFunction(Function &fun) {
         if(!key || isa<Constant>(key))
           continue;
 
-        assert(!symbs.count(key));
+        if(symbs.count(key)) {
+          errs() << "Skipping duplicate annotation for value: ";
+          key->printAsOperand(errs(), false);
+          errs() << '\n';
+          continue;
+        }
         remember(*key, *varOf(*annot));
       }
 
