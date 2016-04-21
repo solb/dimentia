@@ -18,14 +18,14 @@ all: $(C_SOURCES:.c=.ll) $(CXXSOURCES:.cpp=.ll)
 
 .PHONY: help
 help:
-	@echo "USAGE: make testprog    - ELF executable"
+	@echo "USAGE: make testprog     - ELF executable"
 	@echo "       make testprog.ubc - Unoptimized LLVM bitcode"
-	@echo "       make testprog.bc - mem2reg'd LLVM bitcode"
+	@echo "       make testprog.bc  - mem2reg'd LLVM bitcode"
 	@echo "       make testprog.ull - Unoptimized LLVM IR assembly"
-	@echo "       make testprog.ll - mem2reg'd LLVM IR assembly"
-	@echo "       make testprog.s  - Assembly code"
-	@echo "       make testprog.o  - Object file"
-	@echo "       make clean       - Remove all generated files"
+	@echo "       make testprog.ll  - mem2reg'd LLVM IR assembly"
+	@echo "       make testprog.s   - Assembly code"
+	@echo "       make testprog.o   - Object file"
+	@echo "       make clean        - Remove all generated files"
 
 .PHONY: clean
 clean:
