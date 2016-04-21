@@ -2,6 +2,7 @@
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/IntrinsicInst.h>
 #include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -12,7 +13,10 @@
 
 using llvm::AnalysisUsage;
 using llvm::BasicBlock;
+using llvm::Constant;
+using llvm::DbgValueInst;
 using llvm::DIVariable;
+using llvm::dyn_cast;
 using llvm::format_decimal;
 using llvm::Function;
 using llvm::Instruction;
@@ -26,6 +30,7 @@ using std::hash;
 using std::pair;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 using std::min;
 
@@ -104,6 +109,21 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         int subtrahend = 1;
 
         switch(inst.getOpcode()) {
+        case Instruction::Call: {
+          if(DbgValueInst *dint = dyn_cast<DbgValueInst>(&inst)) {
+              DIVariable *inf = dint->getVariable();
+              assert(inf);
+              if(const unordered_set<Value *> *vals = (*vars)[*inf])
+                for(Value *val : *vals)
+                  if(val != inst.getOperand(0)) {
+                    vector<int> eqn;
+                    elem(eqn, idx(*val)) = 1;
+                    elem(eqn, idx(*dint->getValue())) = -1;
+                    eqns.push_back(move(eqn));
+                  }
+          }
+        }
+
         case Instruction::Store: {
           outs() << inst << '\n';
 
@@ -121,7 +141,8 @@ bool GenerateEquations::runOnFunction(Function &fun) {
         case Instruction::Add:
         case Instruction::FAdd:
         case Instruction::Sub:
-        case Instruction::FSub: {
+        case Instruction::FSub:
+        case Instruction::PHI: {
           outs() << inst << '\n';
 
           for(Use &op : inst.operands())
