@@ -18,7 +18,7 @@ all: $(C_SOURCES:.c=.ll)
 .PHONY: help
 help:
 	@echo "USAGE: make testprog    - ELF executable"
-	@echo "       make testprog.BC - Unoptimized LLVM bitcode"
+	@echo "       make testprog.ubc - Unoptimized LLVM bitcode"
 	@echo "       make testprog.bc - mem2reg'd LLVM bitcode"
 	@echo "       make testprog.ull - Unoptimized LLVM IR assembly"
 	@echo "       make testprog.ll - mem2reg'd LLVM IR assembly"
@@ -32,10 +32,10 @@ clean:
 
 .SECONDARY:
 
-%.BC: %.c
+%.ubc: %.c
 	$(CC) -c -emit-llvm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-%.bc: %.BC
+%.bc: %.ubc
 	$(OPT) -mem2reg $< -o $@
 
 %.ull: %.c
