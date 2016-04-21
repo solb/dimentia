@@ -15,6 +15,7 @@ clean:
 
 GenerateEquations.o: GenerateEquations.h TraceVariables.h
 TraceVariables.o: TraceVariables.h
+TraceVariablesNg.o: TraceVariablesNg.h
 
 %.so: %.o
 	$(CXX) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
