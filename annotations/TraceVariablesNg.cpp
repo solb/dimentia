@@ -100,6 +100,8 @@ Value *TraceVariablesNg::valOf(DbgInfoIntrinsic *inf) {
 
   if(!res)
     errs() << "INFO: Encountered unused variable: " << str(*varOf(inf), true) << '\n';
+  else if(isa<Constant>(res))
+    res = nullptr;
   return res;
 }
 
