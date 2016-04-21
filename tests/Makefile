@@ -11,9 +11,10 @@ CXXFLAGS := -std=c++11 -g -O0 -Wall -Wextra -Wpedantic
 ########
 
 C_SOURCES := $(wildcard *.c)
+CXX_SOURCES := $(wildcard *.cpp)
 
 .PHONY: all
-all: $(C_SOURCES:.c=.ll)
+all: $(C_SOURCES:.c=.ll) $(CXXSOURCES:.cpp=.ll)
 
 .PHONY: help
 help:
@@ -35,6 +36,9 @@ clean:
 %.ubc: %.c
 	$(CC) -c -emit-llvm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
+%.ubc: %.cpp
+	$(CXX) -c -emit-llvm $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
 %.bc: %.ubc
 	$(OPT) -mem2reg $< -o $@
 
@@ -49,3 +53,6 @@ clean:
 
 %.s: %.c
 	$(CC) -S $(CPPFLAGS) $(CFLAGS) $<
+
+%.s: %.cpp
+	$(CXX) -S $(CPPFLAGS) $(CXXFLAGS) $<
