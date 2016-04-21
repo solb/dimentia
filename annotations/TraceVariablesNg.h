@@ -3,6 +3,7 @@
 
 #include <llvm/Pass.h>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace llvm {
 class DbgInfoIntrinsic;
@@ -14,8 +15,8 @@ class TraceVariablesNg : public llvm::ModulePass {
 public:
   static char ID;
 
-  std::unordered_multimap<llvm::Value *, llvm::DIVariable *> vars;
-  std::unordered_multimap<llvm::DIVariable *, llvm::Value *> vals;
+  std::unordered_map<llvm::Value *, std::unordered_set<llvm::DIVariable *>> vars;
+  std::unordered_map<llvm::DIVariable *, std::unordered_set<llvm::Value *>> vals;
 
   static std::string str(const llvm::DIVariable &, bool line_num = false);
 
@@ -26,7 +27,6 @@ public:
   void print(llvm::raw_ostream &, const llvm::Module *) const override;
 
   void insert(llvm::Value *, llvm::DIVariable *);
-  std::vector<llvm::DIVariable *> unique_range() const;
 
 private:
   static llvm::Value *valOf(llvm::DbgInfoIntrinsic *);

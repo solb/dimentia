@@ -7,9 +7,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
-using std::pair;
 using std::string;
-using std::vector;
 
 char TraceVariablesNg::ID = 0;
 
@@ -69,13 +67,12 @@ bool TraceVariablesNg::runOnModule(llvm::Module &mod) {
 }
 
 void TraceVariablesNg::print(raw_ostream &stm, const Module *mod) const {
-  for(DIVariable *key : unique_range()) {
-    stm << str(*key, true) << " is a carried in registers:\n";
-    auto range = vals.equal_range(key);
-    for_each(range.first, range.second, [&stm](const pair<DIVariable *, Value *> &mapping) {
+  for(auto mapping : vals) {
+    stm << str(*mapping.first, true) << " is carried in registers:\n";
+    for(Value *var : mapping.second) {
       stm << '\t';
-      mapping.second->printAsOperand(stm, false);
-    });
+      var->printAsOperand(stm, false);
+    }
     stm << '\n';
   }
 }
@@ -84,18 +81,8 @@ void TraceVariablesNg::insert(Value *val, DIVariable *var) {
   assert(val);
   assert(var);
 
-  vars.emplace(val, var);
-  vals.emplace(var, val);
-}
-
-vector<DIVariable *> TraceVariablesNg::unique_range() const {
-  vector<DIVariable *> res;
-  transform(vals.begin(), vals.end(), back_inserter(res), [](const pair<DIVariable *, Value *> &mapping) {
-    return mapping.first;
-  });
-  sort(res.begin(), res.end());
-  unique(res.begin(), res.end());
-  return res;
+  vars[val].emplace(var);
+  vals[var].emplace(val);
 }
 
 Value *TraceVariablesNg::valOf(DbgInfoIntrinsic *inf) {
