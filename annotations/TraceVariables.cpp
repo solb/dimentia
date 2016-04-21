@@ -153,7 +153,13 @@ DILocalVariable *TraceVariables::varOf(DbgInfoIntrinsic &annot) {
 }
 
 void TraceVariables::remember(Value &val, DIVariable &intr) {
-  symbs.emplace(&val, intr);
+  if(!symbs.count(&val))
+    symbs.emplace(&val, intr);
+  else {
+    errs() << "Skipping duplicate annotation for value: ";
+    val.printAsOperand(errs(), false);
+    errs() << '\n';
+  }
 
   if(annts.count(&intr))
     annts[&intr].emplace(&val);
