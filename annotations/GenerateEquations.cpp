@@ -20,6 +20,7 @@ using llvm::dyn_cast;
 using llvm::format_decimal;
 using llvm::Function;
 using llvm::Instruction;
+using llvm::isa;
 using llvm::Module;
 using llvm::outs;
 using llvm::raw_string_ostream;
@@ -110,7 +111,8 @@ bool GenerateEquations::runOnFunction(Function &fun) {
 
         switch(inst.getOpcode()) {
         case Instruction::Call: {
-          if(DbgValueInst *dint = dyn_cast<DbgValueInst>(&inst)) {
+          if(DbgValueInst *dint = dyn_cast<DbgValueInst>(&inst))
+            if(!isa<Constant>(dint->getValue())) {
               DIVariable *inf = dint->getVariable();
               assert(inf);
               if(const unordered_set<Value *> *vals = (*vars)[*inf])
@@ -121,13 +123,13 @@ bool GenerateEquations::runOnFunction(Function &fun) {
                     elem(eqn, idx(*dint->getValue())) = -1;
                     eqns.push_back(move(eqn));
                   }
-          }
+            }
         }
 
         case Instruction::Store: {
           outs() << inst << '\n';
 
-          if(inst.getOperand(0) != inst.getOperand(1)) {
+          if(!isa<Constant>(inst.getOperand(0)) && inst.getOperand(0) != inst.getOperand(1)) {
             outs() << "deg(" << describeVar(*inst.getOperand(1)) << ") = deg(" << describeVar(*inst.getOperand(0)) << ")\n";
 
             vector<int> eqn;
@@ -146,7 +148,7 @@ bool GenerateEquations::runOnFunction(Function &fun) {
           outs() << inst << '\n';
 
           for(Use &op : inst.operands())
-            if((*vars)[*op] != (*vars)[inst]) {
+            if(!isa<Constant>(*op) && (*vars)[*op] != (*vars)[inst]) {
               outs() << "deg(" << describeVar(inst) << ") = deg(" << describeVar(*op) << ")\n";
 
               vector<int> eqn;
@@ -171,12 +173,13 @@ bool GenerateEquations::runOnFunction(Function &fun) {
 
           outs() << "deg(" << describeVar(inst) << ")";
           bool subsequent = false;
-          for(Use &op : inst.operands()) {
-            outs() << (!subsequent ? " = " : operation) << "deg(" << describeVar(*op) << ')';
+          for(Use &op : inst.operands())
+            if(!isa<Constant>(op)) {
+              outs() << (!subsequent ? " = " : operation) << "deg(" << describeVar(*op) << ')';
 
-            elem(eqn, idx(*op)) += !subsequent ? -1 : subtrahend;
-            subsequent = true;
-          }
+              elem(eqn, idx(*op)) += !subsequent ? -1 : subtrahend;
+              subsequent = true;
+            }
           outs() << '\n';
 
           eqns.push_back(move(eqn));
