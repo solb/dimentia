@@ -79,19 +79,6 @@ bool TraceVariables::runOnFunction(Function &fun) {
         remember(*key, *varOf(*annot));
       }
 
-  for(BasicBlock &block : fun.getBasicBlockList())
-    for(Instruction &inst : block.getInstList())
-      if(PHINode *phi = dyn_cast<PHINode>(&inst))
-        for(Use &use : phi->operands())
-          if(symbs.count(&*use)) {
-            DIVariable &var = symbs.at(&*use);
-            if(symbs.count(phi)) {
-              assert(&symbs.at(phi) == &var);
-              continue;
-            }
-            remember(*phi, var);
-          }
-
   return false;
 }
 
