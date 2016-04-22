@@ -235,10 +235,11 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
   if(src.isa_constant() || dest.isa_constant())
     return;
 
-  errs() << "\tdeg(" << (const string &) dest << ") = deg(" << (const string &) src << ")\n";
+  index_type d = index(dest), s = index(src);
+  errs() << "\tdeg(" << (const string &) variables[d] << ") = deg(" << (const string &) variables[s] << ")\n";
   vector<int> equation;
-  elem(equation, index(dest)) = 1;
-  elem(equation, index(src)) = -1;
+  elem(equation, d) = 1;
+  elem(equation, s) = -1;
   equations.push_back(move(equation));
 }
 
@@ -248,21 +249,21 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
 
   bool ran = false;
   vector<int> equation;
-  dimens_var lhs = line;
-  elem(equation, index(lhs)) = 1;
+  index_type lhs = index(line);
+  elem(equation, lhs) = 1;
   for(Use &op : line.operands())
     if(!isa<Constant>(*op)) {
-      dimens_var term = *op;
+      index_type term = index(*op);
       if(!ran) {
         // First term...
-        errs() << "\tdeg(" << (const string &) lhs << ") = deg(" << (const string &) term << ')';
+        errs() << "\tdeg(" << (const string &) variables[lhs] << ") = deg(" << (const string &) variables[term] << ')';
         // is always positive.
-        elem(equation, index(term)) = -1;
+        elem(equation, term) = -1;
         ran = true;
       } else {
         // Subsequent term
-        errs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) term << ')';
-        elem(equation, index(term)) = multiplier;
+        errs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) variables[term] << ')';
+        elem(equation, term) = multiplier;
       }
     }
 
