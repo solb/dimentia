@@ -183,6 +183,16 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
       outs() << "Processing instruction: " << inst << '\n';
       instruction_setadditive(inst, multiplier);
       break;
+
+    case Instruction::Load:
+      outs() << "Processing instruction: " << inst << '\n';
+      instruction_setequal(inst, *inst.getOperand(0));
+      break;
+
+    case Instruction::Store:
+      outs() << "Processing instruction: " << inst << '\n';
+      instruction_setequal(*inst.getOperand(1), *inst.getOperand(0));
+      break;
   }
 }
 
