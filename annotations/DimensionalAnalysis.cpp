@@ -110,6 +110,10 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
       for(Instruction &inst : block.getInstList())
         instruction_opdecode(inst);
 
+  // Make sure no temporaries were erroneously added for registers already associated with a source variable.
+  for(dimens_var each : variables)
+    assert(!(DIVariable *) each);
+
   // Smooth the equations matrix's jagged boundaries.
   index_type cols = variables.size();
   for(vector<int> &row : equations) {
