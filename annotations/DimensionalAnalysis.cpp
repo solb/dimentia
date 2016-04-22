@@ -267,7 +267,15 @@ int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type
 }
 
 DimensionalAnalysis::index_type DimensionalAnalysis::index(const dimens_var &var) {
-  return indices.count(var) ? indices[var] : insert(var);
+  if(indices.count(var))
+    // There's already an entry for this program variable, so just use it.
+    return indices[var];
+  else if(DIVariable *source_var = var)
+    // This program variable is a register with an associated source variable, so use that.
+    return index(*source_var);
+  else
+    // This program variable is a new temporary we haven't seen before, so add an entry.
+    return insert(var);
 }
 
 DimensionalAnalysis::index_type DimensionalAnalysis::insert(const dimens_var &var) {
