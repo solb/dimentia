@@ -37,7 +37,7 @@ dimens_var::dimens_var(const DIVariable &var) :
 dimens_var::dimens_var(Value &val) :
     dimens_var(&val,
         val_str(val),
-        isa<Constant>(&val)) {
+        isa<Constant>(&val) && !isa<GlobalValue>(&val)) {
   assert(lookup);
 
   // See whether this register has a corresponding source variable.
