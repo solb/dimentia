@@ -43,6 +43,7 @@ private:
   std::vector<dimens_var> variables;
   std::unordered_map<dimens_var, index_type> indices;
   std::vector<std::vector<int>> equations;
+  std::vector<int> dimensionless;
   const TraceVariablesNg *groupings;
 
 public:
@@ -57,6 +58,8 @@ public:
   void print(llvm::raw_ostream &, const llvm::Module *) const override;
 
 private:
+  void calcDimensionless();
+
   void instruction_opdecode(llvm::Instruction &);
   void instruction_setequal(const dimens_var &dest, const dimens_var &src);
 

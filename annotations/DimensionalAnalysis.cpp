@@ -4,10 +4,12 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
+#include <lapacke.h>
 
 #include "TraceVariablesNg.h"
 
 using namespace llvm;
+using std::min;
 using std::move;
 using std::string;
 using std::vector;
@@ -59,6 +61,7 @@ DimensionalAnalysis::DimensionalAnalysis() :
     variables(),
     indices(),
     equations(),
+    dimensionless(),
     groupings(nullptr) {}
 
 void DimensionalAnalysis::getAnalysisUsage(llvm::AnalysisUsage &info) const {
@@ -89,10 +92,13 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
     row.resize(cols);
   }
 
+  // Perform the actual dimensionality calculations.
+  calcDimensionless();
   return false;
 }
 
 void DimensionalAnalysis::print(llvm::raw_ostream &stream, const llvm::Module *module) const {
+  // Here's the matrix we sent to the solver.
   for(const dimens_var &each : variables)
     stream << (const string &) each << ' ';
   stream << '\n';
@@ -101,6 +107,56 @@ void DimensionalAnalysis::print(llvm::raw_ostream &stream, const llvm::Module *m
       stream << format_decimal(row[ix], ((const string &) variables[ix]).size()) << ' ';
     stream << '\n';
   }
+
+  // And the "winners" are...
+  stream << "Found " << dimensionless.size() << " dimensionless variables:\n";
+  for(int index : dimensionless)
+    stream << (const string &) variables[index] << '\n';
+}
+
+void DimensionalAnalysis::calcDimensionless() {
+  int rows = equations.size();
+  int cols = equations[0].size();
+
+  char cN = 'N';
+  char cA = 'A';
+
+  double* A = new double[rows*cols];
+  double* sigmas = new double[rows+cols];
+  int work_sz = (rows+cols)*30;
+  double* work = new double[work_sz];
+  double* Vt = new double[cols*cols];
+  int ldvt = cols;
+  int info;
+
+  for (int i = 0; i < rows; ++i)
+    for (int j = 0; j < cols; ++j)
+      A[i+j*rows] = equations[i][j];
+
+  dgesvd_(&cN, &cA, &rows, &cols, A, &rows,
+          sigmas, NULL, &rows, Vt, &ldvt, work, &work_sz, &info);
+  assert(info == 0);
+
+  for (int i = min(cols, rows); i < cols; ++i)
+    sigmas[i] = 0;
+
+  const double eps = 1e-9;
+  for (int j = 0; j < cols; ++j) {
+    bool good = false;
+    for (int i = 0; i < cols; ++i) {
+      if (fabs(sigmas[i]) < eps && fabs(Vt[i+j*cols]) > eps) {
+        good = true;
+      }
+    }
+    if (!good) {
+      dimensionless.push_back(j);
+    }
+  }
+
+  delete[] A;
+  delete[] sigmas;
+  delete[] work;
+  delete[] Vt;
 }
 
 void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
