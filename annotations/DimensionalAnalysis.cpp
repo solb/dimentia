@@ -160,11 +160,10 @@ void DimensionalAnalysis::calcDimensionless() {
 }
 
 void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
-  int multiplier = -1;
+  int multiplier = 1;
   switch(inst.getOpcode()) {
     case Instruction::Add:
     case Instruction::FAdd:
-      multiplier = 1;
     case Instruction::Sub:
     case Instruction::FSub:
     case Instruction::ICmp:
@@ -173,6 +172,16 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
       outs() << "Processing instruction: " << inst << '\n';
       for(Use &op : inst.operands())
         instruction_setequal(inst, *op);
+      break;
+
+    case Instruction::Mul:
+    case Instruction::FMul:
+    multiplier = -1;
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
+      outs() << "Processing instruction: " << inst << '\n';
+      instruction_setadditive(inst, multiplier);
       break;
   }
 }
@@ -186,6 +195,33 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
   elem(equation, index(dest)) = 1;
   elem(equation, index(src)) = -1;
   equations.push_back(move(equation));
+}
+
+void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int multiplier) {
+  if(isa<Constant>(line))
+    return;
+
+  bool ran = false;
+  vector<int> equation;
+  dimens_var lhs = line;
+  elem(equation, index(lhs)) = 1;
+  for(Use &op : line.operands())
+    if(!isa<Constant>(*op)) {
+      dimens_var term = *op;
+      if(!ran) {
+        // First term...
+        outs() << "\tdeg(" << (const string &) lhs << ") = deg(" << (const string &) term << ')';
+        // is always positive.
+        elem(equation, index(term)) = -1;
+        ran = true;
+      } else
+        // Subsequent term
+        outs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) term << ')';
+        elem(equation, index(term)) = multiplier;
+    }
+
+  if(ran)
+    equations.push_back(move(equation));
 }
 
 int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type idx) {
