@@ -259,15 +259,17 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
         // is always positive.
         elem(equation, index(term)) = -1;
         ran = true;
-      } else
+      } else {
         // Subsequent term
         errs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) term << ')';
         elem(equation, index(term)) = multiplier;
+      }
     }
 
-  if(ran)
+  if(ran) {
     errs() << '\n';
     equations.push_back(move(equation));
+  }
 }
 
 int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type idx) {
