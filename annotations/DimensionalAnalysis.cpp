@@ -22,10 +22,13 @@ static string val_str(const Value &obj) {
   return res;
 }
 
+const TraceVariablesNg *dimens_var::lookup = nullptr;
+
 dimens_var::dimens_var(const void *hash, string &&str, bool constant) :
     hash((unsigned long) hash),
     str(move(str)),
-    constant(constant) {}
+    constant(constant),
+    svar(nullptr) {}
 
 dimens_var::dimens_var(const DIVariable &var) :
     dimens_var(&var,
@@ -34,7 +37,14 @@ dimens_var::dimens_var(const DIVariable &var) :
 dimens_var::dimens_var(Value &val) :
     dimens_var(&val,
         val_str(val),
-        isa<Constant>(&val)) {}
+        isa<Constant>(&val)) {
+  assert(lookup);
+
+  // See whether this register has a corresponding source variable.
+  if(lookup->vars.count(&val))
+    // Any arbitrary one of the mappings is fine, because they're all related by equations.
+    svar = *lookup->vars.at(&val).begin();
+}
 
 dimens_var::~dimens_var() = default;
 
@@ -48,6 +58,10 @@ dimens_var::operator unsigned long() const {
 
 dimens_var::operator const string &() const {
   return str;
+}
+
+dimens_var::operator DIVariable *() const {
+  return svar;
 }
 
 bool dimens_var::isa_constant() const {
@@ -72,6 +86,7 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   // We cannot allow modification of this structure or the (parallel) indices won't be stable!
   const TraceVariablesNg &groupings = getAnalysis<TraceVariablesNg>();
   this->groupings = &groupings;
+  dimens_var::lookup = &groupings;
 
   // Indices less than groupings.vals.size() correspond to source variables.
   variables.reserve(groupings.vals.size());

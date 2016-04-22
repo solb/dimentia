@@ -14,10 +14,14 @@ class Value;
 class TraceVariablesNg;
 
 struct dimens_var {
+public:
+  static const TraceVariablesNg *lookup;
+
 private:
   unsigned long hash;
   std::string str;
   bool constant;
+  llvm::DIVariable *svar;
 
   dimens_var(const void *hash, std::string &&str = "", bool constant = false);
 
@@ -28,6 +32,9 @@ public:
 	bool operator==(const dimens_var &other) const;
 	operator unsigned long() const;
   operator const std::string &() const;
+
+  // Corresponding source pointer, if different from this var itself.
+  operator llvm::DIVariable *() const;
   bool isa_constant() const;
 };
 
