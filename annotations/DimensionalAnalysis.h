@@ -19,11 +19,11 @@ private:
   std::string str;
   bool constant;
 
-  dimens_var(void *hash, std::string &&str = "", bool constant = false);
+  dimens_var(const void *hash, std::string &&str = "", bool constant = false);
 
 public:
-  dimens_var(llvm::DIVariable &var);
-  dimens_var(llvm::Value &var);
+  dimens_var(const llvm::DIVariable &var);
+  dimens_var(const llvm::Value &var);
   virtual ~dimens_var();
 	bool operator==(const dimens_var &other) const;
 	operator unsigned long() const;

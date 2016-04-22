@@ -14,7 +14,7 @@ using std::move;
 using std::string;
 using std::vector;
 
-static string val_str(Value &obj) {
+static string val_str(const Value &obj) {
   string res;
   raw_string_ostream stm(res);
   obj.printAsOperand(stm, false);
@@ -22,16 +22,16 @@ static string val_str(Value &obj) {
   return res;
 }
 
-dimens_var::dimens_var(void *hash, string &&str, bool constant) :
+dimens_var::dimens_var(const void *hash, string &&str, bool constant) :
     hash((unsigned long) hash),
     str(move(str)),
     constant(constant) {}
 
-dimens_var::dimens_var(DIVariable &var) :
+dimens_var::dimens_var(const DIVariable &var) :
     dimens_var(&var,
         TraceVariablesNg::str(var)) {}
 
-dimens_var::dimens_var(Value &val) :
+dimens_var::dimens_var(const Value &val) :
     dimens_var(&val,
         val_str(val),
         isa<Constant>(&val)) {}
