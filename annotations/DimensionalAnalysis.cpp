@@ -231,6 +231,7 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
     }
 
   if(ran)
+    errs() << '\n';
     equations.push_back(move(equation));
 }
 
