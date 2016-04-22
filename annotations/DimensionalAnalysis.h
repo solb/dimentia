@@ -23,7 +23,7 @@ private:
 
 public:
   dimens_var(const llvm::DIVariable &var);
-  dimens_var(const llvm::Value &var);
+  dimens_var(llvm::Value &var);
   virtual ~dimens_var();
 	bool operator==(const dimens_var &other) const;
 	operator unsigned long() const;
