@@ -89,7 +89,8 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   dimens_var::lookup = &groupings;
 
   // Indices less than groupings.vals.size() correspond to source variables.
-  variables.reserve(groupings.vals.size());
+  index_type first_temporary = groupings.vals.size();
+  variables.reserve(first_temporary);
   for(auto mapping : groupings.vals)
     insert(*mapping.first);
   // From now on, whenever we encounter a new temporary, we'll insert() it, assigning it a larger index.
@@ -123,6 +124,11 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
 
   // Perform the actual dimensionality calculations.
   calcDimensionless();
+
+  // Trim out temporaries to leave only source variables in our output.
+  dimensionless.erase(remove_if(dimensionless.begin(), dimensionless.end(), [first_temporary](int index) {
+    return index >= first_temporary;
+  }), dimensionless.end());
   return false;
 }
 
