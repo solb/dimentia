@@ -7,7 +7,7 @@ LDFLAGS := $(shell llvm-config-$(LLVERSION) --ldflags)
 LDFLAGS := $(LDFLAGS) -lblas -llapack
 
 .PHONY: all
-all: GenerateEquations.so TraceVariables.so
+all: DimensionalAnalysis.so GenerateEquations.so TraceVariables.so TraceVariablesNg.so
 
 .PHONY: clean
 clean:
