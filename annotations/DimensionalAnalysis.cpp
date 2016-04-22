@@ -169,7 +169,7 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::ICmp:
     case Instruction::FCmp:
     case Instruction::PHI:
-      outs() << "Processing instruction: " << inst << '\n';
+      errs() << "Processing instruction: " << inst << '\n';
       for(Use &op : inst.operands())
         instruction_setequal(inst, *op);
       break;
@@ -180,17 +180,17 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::FDiv:
-      outs() << "Processing instruction: " << inst << '\n';
+      errs() << "Processing instruction: " << inst << '\n';
       instruction_setadditive(inst, multiplier);
       break;
 
     case Instruction::Load:
-      outs() << "Processing instruction: " << inst << '\n';
+      errs() << "Processing instruction: " << inst << '\n';
       instruction_setequal(inst, *inst.getOperand(0));
       break;
 
     case Instruction::Store:
-      outs() << "Processing instruction: " << inst << '\n';
+      errs() << "Processing instruction: " << inst << '\n';
       instruction_setequal(*inst.getOperand(1), *inst.getOperand(0));
       break;
   }
@@ -200,7 +200,7 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
   if(src.isa_constant() || dest.isa_constant())
     return;
 
-  outs() << "\tdeg(" << (const string &) dest << ") = deg(" << (const string &) src << ")\n";
+  errs() << "\tdeg(" << (const string &) dest << ") = deg(" << (const string &) src << ")\n";
   vector<int> equation;
   elem(equation, index(dest)) = 1;
   elem(equation, index(src)) = -1;
@@ -220,13 +220,13 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
       dimens_var term = *op;
       if(!ran) {
         // First term...
-        outs() << "\tdeg(" << (const string &) lhs << ") = deg(" << (const string &) term << ')';
+        errs() << "\tdeg(" << (const string &) lhs << ") = deg(" << (const string &) term << ')';
         // is always positive.
         elem(equation, index(term)) = -1;
         ran = true;
       } else
         // Subsequent term
-        outs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) term << ')';
+        errs() << (multiplier < 0 ? " + " : " - ") << "deg(" << (const string &) term << ')';
         elem(equation, index(term)) = multiplier;
     }
 
