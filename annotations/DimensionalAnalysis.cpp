@@ -79,6 +79,16 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
     insert(*mapping.first);
   // From now on, whenever we encounter a new temporary, we'll insert() it, assigning it a larger index.
 
+  for(auto revmap : groupings.vars)
+    if(revmap.second.size() > 1)
+      for(auto lhs = revmap.second.begin(), end = revmap.second.end(); lhs != end; ++lhs) {
+        auto rhs = lhs;
+        for(++rhs; rhs != end; ++rhs) {
+          errs() << "Source variable analysis revealed that:";
+          instruction_setequal(**lhs, **rhs);
+        }
+      }
+
   // Process the program's instructions.
   for(Function &function : module)
     for(BasicBlock &block : function.getBasicBlockList())
