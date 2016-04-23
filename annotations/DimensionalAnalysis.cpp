@@ -239,8 +239,11 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::GetElementPtr: {
       errs() << "Processing instruction: " << inst << '\n';
+      dimens_var remap = inst;
       dimens_var noncanon = *inst.getOperand(0);
-      indirections.emplace(noncanon, index_mem(noncanon));
+      index_type canonical = index_mem(noncanon);
+      errs() << "\tindirect[" << (const string &) remap << "] = " << (const string &) variables[canonical] << '\n';
+      indirections.emplace(remap, index_mem(noncanon));
       break;
     }
   }
