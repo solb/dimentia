@@ -212,12 +212,6 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
         instruction_setequal(inst, *op);
       break;
 
-    case Instruction::ICmp:
-    case Instruction::FCmp:
-      errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(*inst.getOperand(0), *inst.getOperand(1));
-      break;
-
     case Instruction::Mul:
     case Instruction::FMul:
     multiplier = -1;
@@ -246,6 +240,12 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
         assert(false);
       break;
     }
+
+    case Instruction::ICmp:
+    case Instruction::FCmp:
+      errs() << "Processing instruction: " << inst << '\n';
+      instruction_setequal(*inst.getOperand(0), *inst.getOperand(1));
+      break;
   }
 }
 
