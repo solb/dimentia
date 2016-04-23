@@ -76,6 +76,7 @@ private:
 
   int &elem(std::vector<int> &, index_type);
   index_type index_mem(const dimens_var &);
+  index_type insert_mem(llvm::Value &);
   index_type index(const dimens_var &);
   index_type insert(const dimens_var &);
 };

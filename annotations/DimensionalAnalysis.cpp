@@ -1,5 +1,6 @@
 #include "DimensionalAnalysis.h"
 
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/Format.h>
@@ -15,7 +16,7 @@ using std::string;
 using std::vector;
 
 static bool is_const(const Value *obj) {
-  return obj && isa<Constant>(*obj) && !isa<GlobalValue>(*obj);
+  return obj && isa<Constant>(*obj) && !isa<GlobalValue>(*obj) && !isa<ConstantExpr>(*obj);
 }
 
 static string val_str(const Value &obj) {
@@ -229,21 +230,20 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::Load:
       errs() << "Processing instruction: " << inst << '\n';
+      insert_mem(*inst.getOperand(0));
       instruction_setequal(inst, *inst.getOperand(0), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::Store:
       errs() << "Processing instruction: " << inst << '\n';
+      insert_mem(*inst.getOperand(1));
       instruction_setequal(*inst.getOperand(1), *inst.getOperand(0), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::GetElementPtr: {
       errs() << "Processing instruction: " << inst << '\n';
-      dimens_var remap = inst;
-      dimens_var noncanon = *inst.getOperand(0);
-      index_type canonical = index_mem(noncanon);
-      errs() << "\tindirect[" << (const string &) remap << "] = " << (const string &) variables[canonical] << '\n';
-      indirections.emplace(remap, index_mem(noncanon));
+      if(insert_mem(inst) == -1)
+        assert(false);
       break;
     }
   }
@@ -300,6 +300,8 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
 }
 
 int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type idx) {
+  assert(idx != -1);
+
   if(idx >= arr.size())
     arr.resize(idx + 1);
   return arr[idx];
@@ -307,6 +309,25 @@ int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type
 
 DimensionalAnalysis::index_type DimensionalAnalysis::index_mem(const dimens_var &var) {
   return indirections.count(var) ? indirections[var] : index(var);
+}
+
+DimensionalAnalysis::index_type DimensionalAnalysis::insert_mem(Value &gep) {
+  dimens_var noncanon = gep;
+  index_type canonical = -1;
+  if(Instruction *gep_inst = dyn_cast<Instruction>(&gep)) {
+    if(gep_inst->getOpcode() == Instruction::GetElementPtr)
+      canonical = index_mem(*gep_inst->getOperand(0));
+  } else if(ConstantExpr *gep_expr = dyn_cast<ConstantExpr>(&gep)) {
+    if(gep_expr->getOpcode() == Instruction::GetElementPtr)
+      canonical = index_mem(*gep_expr->getOperand(0));
+  }
+  if(canonical == -1)
+    return -1;
+
+  if(!indirections.count(noncanon))
+    indirections.emplace(noncanon, canonical);
+  errs() << "\tindirect[" << (const string &) noncanon << "] = " << (const string &) variables[canonical] << '\n';
+  return canonical;
 }
 
 DimensionalAnalysis::index_type DimensionalAnalysis::index(const dimens_var &var) {
