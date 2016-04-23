@@ -100,6 +100,7 @@ char DimensionalAnalysis::ID = 0;
 DimensionalAnalysis::DimensionalAnalysis() :
     ModulePass(ID),
     module(nullptr),
+    indirections(),
     variables(),
     indices(),
     equations(),
