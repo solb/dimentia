@@ -201,12 +201,16 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::FAdd:
     case Instruction::Sub:
     case Instruction::FSub:
-    case Instruction::ICmp:
-    case Instruction::FCmp:
     case Instruction::PHI:
       errs() << "Processing instruction: " << inst << '\n';
       for(Use &op : inst.operands())
         instruction_setequal(inst, *op);
+      break;
+
+    case Instruction::ICmp:
+    case Instruction::FCmp:
+      errs() << "Processing instruction: " << inst << '\n';
+      instruction_setequal(*inst.getOperand(0), *inst.getOperand(1));
       break;
 
     case Instruction::Mul:
