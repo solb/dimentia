@@ -29,7 +29,10 @@ public:
   void insert(llvm::Value *, llvm::DIVariable *);
 
 private:
+  // Get the register storing the variable in the program.
   static llvm::Value *valOf(llvm::DbgInfoIntrinsic *);
+
+  // Get the source variable associated with the program variable.
   static llvm::DIVariable *varOf(llvm::DbgInfoIntrinsic *);
 };
 
