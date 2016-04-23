@@ -47,6 +47,7 @@ class DimensionalAnalysis : public llvm::ModulePass {
 private:
   typedef std::vector<dimens_var>::size_type index_type;
 
+  std::unordered_map<dimens_var, index_type> indirections;
   std::vector<dimens_var> variables;
   std::unordered_map<dimens_var, index_type> indices;
   std::vector<std::vector<int>> equations;
@@ -72,6 +73,7 @@ private:
   void instruction_setadditive(llvm::Instruction &line, int multiplier);
 
   int &elem(std::vector<int> &, index_type);
+  index_type index_mem(const dimens_var &);
   index_type index(const dimens_var &);
   index_type insert(const dimens_var &);
 };

@@ -229,13 +229,20 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::Load:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(inst, *inst.getOperand(0));
+      instruction_setequal(inst, *variables[index_mem(*inst.getOperand(0))]);
       break;
 
     case Instruction::Store:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(*inst.getOperand(1), *inst.getOperand(0));
+      instruction_setequal(*variables[index_mem(*inst.getOperand(1))], *inst.getOperand(0));
       break;
+
+    case Instruction::GetElementPtr: {
+      errs() << "Processing instruction: " << inst << '\n';
+      dimens_var noncanon = *inst.getOperand(0);
+      indirections.emplace(noncanon, index_mem(noncanon));
+      break;
+    }
   }
 }
 
@@ -288,6 +295,10 @@ int &DimensionalAnalysis::elem(vector<int> &arr, DimensionalAnalysis::index_type
   if(idx >= arr.size())
     arr.resize(idx + 1);
   return arr[idx];
+}
+
+DimensionalAnalysis::index_type DimensionalAnalysis::index_mem(const dimens_var &var) {
+  return indirections.count(var) ? indirections[var] : index(var);
 }
 
 DimensionalAnalysis::index_type DimensionalAnalysis::index(const dimens_var &var) {
