@@ -3,6 +3,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Operator.h>
 #include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
 #include <lapacke.h>
@@ -15,8 +16,19 @@ using std::move;
 using std::string;
 using std::vector;
 
+#define OFFSET_START_BIT         48
+#define OFFSET_BIT_WIDTH(ptr_ty) (8 * sizeof(ptr_ty) - OFFSET_START_BIT)
+
 static bool is_const(const Value *obj) {
   return obj && isa<Constant>(*obj) && !isa<GlobalValue>(*obj) && !isa<ConstantExpr>(*obj);
+}
+
+static string soff_str(const StructType &type, uint64_t offset) {
+  string res;
+  raw_string_ostream stm(res);
+  stm << type.getName() << '[' << offset << ']';
+  stm.flush();
+  return res;
 }
 
 static string val_str(const Value &obj) {
@@ -34,6 +46,16 @@ dimens_var::dimens_var(const void *hash, string &&str, bool constant) :
     str(move(str)),
     constant(constant),
     svar(nullptr) {}
+
+dimens_var::dimens_var(const StructType &typ, const APInt &off) :
+    dimens_var(&typ,
+        soff_str(typ, off.getZExtValue())) {
+  assert(off.getActiveBits() <= OFFSET_BIT_WIDTH(hash) && "ERROR: Struct offset too large to store!");
+  // Make sure we're distinguished from the object itself, even if our offset is zero!
+  hash |= 0x1;
+  // Store our offset in the high-order bits, since the x86-64 address bus isn't as wide as the word size.
+  hash |= off.getZExtValue() << OFFSET_START_BIT;
+}
 
 dimens_var::dimens_var(const DIVariable &var) :
     dimens_var(&var,
@@ -77,6 +99,7 @@ char DimensionalAnalysis::ID = 0;
 
 DimensionalAnalysis::DimensionalAnalysis() :
     ModulePass(ID),
+    module(nullptr),
     variables(),
     indices(),
     equations(),
@@ -92,6 +115,7 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   const TraceVariablesNg &groupings = getAnalysis<TraceVariablesNg>();
   this->groupings = &groupings;
   dimens_var::lookup = &groupings;
+  this->module = &module;
 
   // Indices less than groupings.vals.size() correspond to source variables.
   index_type first_temporary = groupings.vals.size();
@@ -314,13 +338,18 @@ DimensionalAnalysis::index_type DimensionalAnalysis::index_mem(const dimens_var 
 DimensionalAnalysis::index_type DimensionalAnalysis::insert_mem(Value &gep) {
   dimens_var noncanon = gep;
   index_type canonical = -1;
-  if(Instruction *gep_inst = dyn_cast<Instruction>(&gep)) {
-    if(gep_inst->getOpcode() == Instruction::GetElementPtr)
-      canonical = index_mem(*gep_inst->getOperand(0));
-  } else if(ConstantExpr *gep_expr = dyn_cast<ConstantExpr>(&gep)) {
-    if(gep_expr->getOpcode() == Instruction::GetElementPtr)
-      canonical = index_mem(*gep_expr->getOperand(0));
-  }
+
+  if(GEPOperator *gep_oper = dyn_cast<GEPOperator>(&gep))
+    if(SequentialType *point = dyn_cast<SequentialType>(gep_oper->getPointerOperandType())) {
+      if(StructType *struct_ty = dyn_cast<StructType>(point->getElementType())) {
+        if(ConstantInt *first = dyn_cast<ConstantInt>(&*gep_oper->idx_begin())) {
+          APInt offset(first->getBitWidth(), 0);
+          gep_oper->accumulateConstantOffset(DataLayout(module), offset);
+          canonical = index_mem(dimens_var(*struct_ty, offset));
+        }
+      } else
+      canonical = index_mem(*gep_oper->getOperand(0));
+    }
   if(canonical == -1)
     return -1;
 

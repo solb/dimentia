@@ -8,6 +8,7 @@
 namespace llvm {
 class DIVariable;
 class Instruction;
+class StructType;
 class Value;
 }
 
@@ -26,6 +27,7 @@ private:
   dimens_var(const void *hash, std::string &&str = "", bool constant = false);
 
 public:
+  dimens_var(const llvm::StructType &typ, const llvm::APInt &off);
   dimens_var(const llvm::DIVariable &var);
   dimens_var(llvm::Value &var);
   virtual ~dimens_var();
@@ -47,6 +49,7 @@ class DimensionalAnalysis : public llvm::ModulePass {
 private:
   typedef std::vector<dimens_var>::size_type index_type;
 
+  llvm::Module *module;
   std::unordered_map<dimens_var, index_type> indirections;
   std::vector<dimens_var> variables;
   std::unordered_map<dimens_var, index_type> indices;
