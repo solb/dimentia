@@ -229,12 +229,12 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::Load:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(inst, *variables[index_mem(*inst.getOperand(0))]);
+      instruction_setequal(inst, variables[index_mem(*inst.getOperand(0))]);
       break;
 
     case Instruction::Store:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(*variables[index_mem(*inst.getOperand(1))], *inst.getOperand(0));
+      instruction_setequal(variables[index_mem(*inst.getOperand(1))], *inst.getOperand(0));
       break;
 
     case Instruction::GetElementPtr: {
