@@ -1,7 +1,5 @@
 #include "DimensionalAnalysis.h"
 
-#include <llvm/IR/Constants.h>
-#include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/Support/Format.h>
