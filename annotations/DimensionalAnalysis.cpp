@@ -14,6 +14,10 @@ using std::move;
 using std::string;
 using std::vector;
 
+static bool is_const(const Value *obj) {
+  return obj && isa<Constant>(*obj) && !isa<GlobalValue>(*obj);
+}
+
 static string val_str(const Value &obj) {
   string res;
   raw_string_ostream stm(res);
@@ -37,7 +41,7 @@ dimens_var::dimens_var(const DIVariable &var) :
 dimens_var::dimens_var(Value &val) :
     dimens_var(&val,
         val_str(val),
-        isa<Constant>(&val) && !isa<GlobalValue>(&val)) {
+        is_const(&val)) {
   assert(lookup);
 
   // See whether this register has a corresponding source variable.
@@ -251,7 +255,7 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
 }
 
 void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int multiplier) {
-  if(isa<Constant>(line))
+  if(is_const(&line))
     return;
 
   bool ran = false;
@@ -259,7 +263,7 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
   index_type lhs = index(line);
   elem(equation, lhs) += 1;
   for(Use &op : line.operands())
-    if(!isa<Constant>(*op)) {
+    if(!is_const(&*op)) {
       index_type term = index(*op);
       if(!ran) {
         // First term...
