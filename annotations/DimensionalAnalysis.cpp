@@ -154,8 +154,8 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   calcDimensionless();
 
   // Trim out temporaries to leave only source variables in our output.
-  dimensionless.erase(remove_if(dimensionless.begin(), dimensionless.end(), [first_temporary](int index) {
-    return index >= first_temporary;
+  dimensionless.erase(remove_if(dimensionless.begin(), dimensionless.end(), [this, first_temporary](int index) {
+    return index >= first_temporary && !(variables[index] & 0x1);
   }), dimensionless.end());
   return false;
 }
