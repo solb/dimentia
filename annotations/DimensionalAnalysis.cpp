@@ -240,6 +240,9 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
     return;
 
   index_type d = index(dest), s = index(src);
+  if(d == s)
+    return;
+
   errs() << "\tdeg(" << (const string &) variables[d] << ") = deg(" << (const string &) variables[s] << ")\n";
   vector<int> equation;
   elem(equation, d) += 1;
