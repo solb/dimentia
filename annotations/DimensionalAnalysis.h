@@ -70,6 +70,8 @@ private:
 
   void instruction_opdecode(llvm::Instruction &);
   void instruction_setequal(const dimens_var &dest, const dimens_var &src);
+  void instruction_setequal(const dimens_var &dest, const dimens_var &src,
+      index_type (DimensionalAnalysis::*indexer)(const dimens_var &));
   void instruction_setadditive(llvm::Instruction &line, int multiplier);
 
   int &elem(std::vector<int> &, index_type);

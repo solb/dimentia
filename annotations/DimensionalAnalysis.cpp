@@ -229,12 +229,12 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::Load:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(inst, variables[index_mem(*inst.getOperand(0))]);
+      instruction_setequal(inst, *inst.getOperand(0), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::Store:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(variables[index_mem(*inst.getOperand(1))], *inst.getOperand(0));
+      instruction_setequal(*inst.getOperand(1), *inst.getOperand(0), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::GetElementPtr: {
@@ -250,10 +250,15 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 }
 
 void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dimens_var &src) {
+  instruction_setequal(dest, src, &DimensionalAnalysis::index);
+}
+
+void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dimens_var &src,
+    DimensionalAnalysis::index_type (DimensionalAnalysis::*indexer)(const dimens_var &)) {
   if(src.isa_constant() || dest.isa_constant())
     return;
 
-  index_type d = index(dest), s = index(src);
+  index_type d = (this->*indexer)(dest), s = (this->*indexer)(src);
   if(d == s)
     return;
 
