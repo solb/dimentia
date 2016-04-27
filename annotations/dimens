@@ -1,14 +1,28 @@
 #!/bin/sh
 
+cmd="opt-3.7"
+begin=""
+end=""
+case "$1" in
+-d)
+	cmd="gdb $cmd -ex"
+	begin="'set args"
+	end="'"
+	shift
+	;;
+esac
+
 if [ $# -lt 1 ]
 then
 	cat <<-tac
-		USAGE: $0 <input file>
+		USAGE: $0 [-d] <input file>
 
 		Input file should be an LLVM IR or BC file.
+		With -d, attaches GDB, which is set up so that typing "run" will Just Work. Make sure you've compiled without optimization!
 	tac
 	exit 1
 fi
 
 readonly mydir="`dirname "$0"`"
-opt-3.7 -load "$mydir/TraceVariablesNg.so" -load "$mydir/DimensionalAnalysis.so" -analyze -dimens "$@"
+readonly args="-load $mydir/TraceVariablesNg.so -load $mydir/DimensionalAnalysis.so -analyze -dimens"
+eval $cmd "$begin $args $@ $end"
