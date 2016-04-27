@@ -339,13 +339,14 @@ DimensionalAnalysis::index_type DimensionalAnalysis::insert_mem(Value &gep) {
   index_type canonical = -1;
 
   if(GEPOperator *gep_oper = dyn_cast<GEPOperator>(&gep))
-    if(SequentialType *point = dyn_cast<SequentialType>(gep_oper->getPointerOperandType())) {
+    if(PointerType *point = dyn_cast<PointerType>(gep_oper->getPointerOperandType())) {
       if(StructType *struct_ty = dyn_cast<StructType>(point->getElementType())) {
-        if(ConstantInt *first = dyn_cast<ConstantInt>(&*gep_oper->idx_begin())) {
-          APInt offset(first->getBitWidth(), 0);
-          gep_oper->accumulateConstantOffset(DataLayout(module), offset);
-          canonical = index_mem(dimens_var(*struct_ty, offset));
-        }
+        DataLayout layout(module);
+        IntegerType *point_ty = layout.getIntPtrType(module->getContext(), point->getAddressSpace());
+        APInt offset(point_ty->getBitWidth(), 0);
+        if(!gep_oper->accumulateConstantOffset(layout, offset))
+          assert(false);
+        canonical = index_mem(dimens_var(*struct_ty, offset));
       } else
       canonical = index_mem(*gep_oper->getOperand(0));
     }
