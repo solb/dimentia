@@ -13,6 +13,7 @@ using namespace llvm;
 using std::min;
 using std::move;
 using std::string;
+using std::unordered_set;
 using std::vector;
 
 #define TRACE(x) errs() << #x << " = " << x << "\n"
@@ -188,11 +189,13 @@ void DimensionalAnalysis::print(llvm::raw_ostream &stream, const llvm::Module *m
 
     // Now, which lines are at fault?
     stream << "Suggest inspecting the following source locations:\n";
+    unordered_set<DILocation *> reported;
     for(int index : bad_eqns)
       if(const DebugLoc *spot = locations[index]) {
-        if(*spot) {
+        if(*spot && !reported.count(&**spot)) {
           spot->print(stream);
           stream << '\n';
+          reported.insert(&**spot);
         }
         // (Omitted) else: This equation corresponds to an instruction with no location debugging annotation.
       } else
