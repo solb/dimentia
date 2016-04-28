@@ -106,6 +106,7 @@ DimensionalAnalysis::DimensionalAnalysis() :
     indices(),
     equations(),
     dimensionless(),
+    bad_eqns(),
     groupings(nullptr) {}
 
 void DimensionalAnalysis::getAnalysisUsage(llvm::AnalysisUsage &info) const {
