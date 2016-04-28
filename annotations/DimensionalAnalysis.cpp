@@ -348,7 +348,7 @@ DimensionalAnalysis::index_type DimensionalAnalysis::insert_mem(Value &gep) {
           assert(false);
         canonical = index_mem(dimens_var(*struct_ty, offset));
       } else
-      canonical = index_mem(*gep_oper->getOperand(0));
+        canonical = index_mem(*gep_oper->getOperand(0));
     }
   if(canonical == -1)
     return -1;
