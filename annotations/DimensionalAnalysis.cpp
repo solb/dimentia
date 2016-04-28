@@ -14,6 +14,9 @@ using std::move;
 using std::string;
 using std::vector;
 
+#define TRACE(x) errs() << #x << " = " << x << "\n"
+#define _ << " _ " <<
+
 #define OFFSET_START_BIT         48
 #define OFFSET_BIT_WIDTH(ptr_ty) (8 * sizeof(ptr_ty) - OFFSET_START_BIT)
 
@@ -184,6 +187,8 @@ void DimensionalAnalysis::calcDimensionless() {
   char cN = 'N';
   char cA = 'A';
 
+  dimensionless.clear();
+
   double* A = new double[rows*cols];
   double* sigmas = new double[rows+cols];
   int work_sz = (rows+cols)*30;
@@ -213,6 +218,71 @@ void DimensionalAnalysis::calcDimensionless() {
     }
     if (!good) {
       dimensionless.push_back(j);
+    }
+  }
+
+  delete[] A;
+  delete[] sigmas;
+  delete[] work;
+  delete[] Vt;
+
+  getBadEqns();
+}
+
+void DimensionalAnalysis::getBadEqns() {
+  int rows = equations.size();
+  int rowsM1 = rows - 1;
+  int cols = equations[0].size();
+
+  char cN = 'N';
+  char cA = 'A';
+
+  double* A = new double[rows*cols];
+  double* sigmas = new double[rows+cols];
+  int work_sz = (rows+cols)*30;
+  double* work = new double[work_sz];
+  double* Vt = new double[cols*cols];
+  int ldvt = cols;
+  int info;
+
+  bad_eqns.clear();
+  vector<int> new_dimensionless;
+
+  for (int rem_row = 0; rem_row < rows; ++rem_row) {
+    new_dimensionless.clear();
+
+    for (int i = 0, ci = 0; i < rows; ++i, ++ci) {
+      if (i == rem_row) {
+        --ci;
+        continue;
+      }
+      for (int j = 0; j < cols; ++j)
+        A[ci+j*rowsM1] = equations[i][j];
+    }
+
+    dgesvd_(&cN, &cA, &rowsM1, &cols, A, &rowsM1,
+            sigmas, NULL, &rowsM1, Vt, &ldvt, work, &work_sz, &info);
+    assert(info == 0);
+
+    for (int i = min(cols, rowsM1); i < cols; ++i)
+      sigmas[i] = 0;
+
+    const double eps = 1e-9;
+    for (int j = 0; j < cols; ++j) {
+      bool good = false;
+      for (int i = 0; i < cols; ++i) {
+        if (fabs(sigmas[i]) < eps && fabs(Vt[i+j*cols]) > eps) {
+          good = true;
+        }
+      }
+      if (!good) {
+        new_dimensionless.push_back(j);
+      }
+    }
+
+    if (new_dimensionless != dimensionless) { // maybe size difference at least 2 ?
+      //      TRACE(rem_row _ new_dimensionless.size() _ dimensionless.size());
+      bad_eqns.push_back(rem_row);
     }
   }
 

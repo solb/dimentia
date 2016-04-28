@@ -55,6 +55,7 @@ private:
   std::unordered_map<dimens_var, index_type> indices;
   std::vector<std::vector<int>> equations;
   std::vector<int> dimensionless;
+  std::vector<int> bad_eqns;
   const TraceVariablesNg *groupings;
 
 public:
@@ -70,6 +71,7 @@ public:
 
 private:
   void calcDimensionless();
+  void getBadEqns();
 
   void instruction_opdecode(llvm::Instruction &);
   void instruction_setequal(const dimens_var &dest, const dimens_var &src);
