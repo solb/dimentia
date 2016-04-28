@@ -89,10 +89,11 @@ int main(int argc, char **argv) {
 
   if(mode == MODE_AREA) {
     int area;
-    if(shape == SHAPE_RECTANGLE)
+    if(shape == SHAPE_RECTANGLE) {
       area = param[0] * param[1];
-    else // shape == SHAPE_SQUARE
+    } else { // shape == SHAPE_SQUARE
       area = param[0] + param[0];
+    }
     printf("AREA: %d\n", area);
   } else { // mode == MODE_PERIMETER
     int perimeter;
