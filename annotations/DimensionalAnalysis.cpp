@@ -103,6 +103,8 @@ char DimensionalAnalysis::ID = 0;
 DimensionalAnalysis::DimensionalAnalysis() :
     ModulePass(ID),
     module(nullptr),
+    first_temporary(-1),
+    is_temporary([this](index_type index) {return index >= first_temporary && !(variables[index] & 0x1);}),
     indirections(),
     variables(),
     indices(),
@@ -124,7 +126,7 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   this->module = &module;
 
   // Indices less than groupings.vals.size() correspond to source variables.
-  index_type first_temporary = groupings.vals.size();
+  first_temporary = groupings.vals.size();
   variables.reserve(first_temporary);
   for(auto mapping : groupings.vals)
     insert(*mapping.first);
@@ -161,9 +163,7 @@ bool DimensionalAnalysis::runOnModule(llvm::Module &module) {
   calcDimensionless();
 
   // Trim out temporaries to leave only source variables in our output.
-  dimensionless.erase(remove_if(dimensionless.begin(), dimensionless.end(), [this, first_temporary](int index) {
-    return index >= first_temporary && !(variables[index] & 0x1);
-  }), dimensionless.end());
+  dimensionless.erase(remove_if(dimensionless.begin(), dimensionless.end(), is_temporary), dimensionless.end());
   return false;
 }
 

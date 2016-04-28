@@ -51,6 +51,9 @@ private:
   typedef std::vector<dimens_var>::size_type index_type;
 
   llvm::Module *module;
+  index_type first_temporary;
+  std::function<bool (index_type)> is_temporary;
+
   std::unordered_map<dimens_var, index_type> indirections;
   std::vector<dimens_var> variables;
   std::unordered_map<dimens_var, index_type> indices;
