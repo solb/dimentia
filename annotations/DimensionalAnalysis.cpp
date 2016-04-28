@@ -53,7 +53,7 @@ dimens_var::dimens_var(const void *hash, string &&str, bool constant) :
 dimens_var::dimens_var(const StructType &typ, const APInt &off) :
     dimens_var(&typ,
         soff_str(typ, off.getZExtValue())) {
-  assert(off.getActiveBits() <= OFFSET_BIT_WIDTH(hash) && "ERROR: Struct offset too large to store!");
+  assert((off.getActiveBits() <= OFFSET_BIT_WIDTH(hash) || !~(off.getSExtValue() >> OFFSET_BIT_WIDTH(hash))) && "ERROR: Struct offset too large to store!");
   // Make sure we're distinguished from the object itself, even if our offset is zero!
   hash |= 0x1;
   // Store our offset in the high-order bits, since the x86-64 address bus isn't as wide as the word size.
