@@ -305,7 +305,10 @@ void DimensionalAnalysis::getBadEqns() {
 
     if (new_dimensionless != dimensionless) { // maybe size difference at least 2 ?
       //      TRACE(rem_row _ new_dimensionless.size() _ dimensionless.size());
-      bad_eqns.push_back(rem_row);
+      vector<int> eliminated;
+      set_difference(dimensionless.begin(), dimensionless.end(), new_dimensionless.begin(), new_dimensionless.end(), back_inserter(eliminated));
+      if (count(eliminated.begin(), eliminated.end(), not(is_temporary)))
+        bad_eqns.push_back(rem_row);
     }
   }
 
