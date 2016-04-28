@@ -1,5 +1,6 @@
 #include "DimensionalAnalysis.h"
 
+#include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/Support/Format.h>
@@ -105,6 +106,7 @@ DimensionalAnalysis::DimensionalAnalysis() :
     variables(),
     indices(),
     equations(),
+    locations(),
     dimensionless(),
     bad_eqns(),
     groupings(nullptr) {}
@@ -179,6 +181,23 @@ void DimensionalAnalysis::print(llvm::raw_ostream &stream, const llvm::Module *m
   stream << "Found " << dimensionless.size() << " dimensionless variables:\n";
   for(int index : dimensionless)
     stream << (const string &) variables[index] << '\n';
+
+  if(dimensionless.size()) {
+    // Get ready for the big reveal!
+    stream << '\n';
+
+    // Now, which lines are at fault?
+    stream << "Suggest inspecting the following source locations:\n";
+    for(int index : bad_eqns)
+      if(const DebugLoc *spot = locations[index]) {
+        if(*spot) {
+          spot->print(stream);
+          stream << '\n';
+        }
+        // (Omitted) else: This equation corresponds to an instruction with no location debugging annotation.
+      } else
+        errs() << "WARNING: Untraceable equation " << index << " is a suspect.\n";
+  }
 }
 
 void DimensionalAnalysis::calcDimensionless() {
@@ -303,7 +322,7 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::PHI:
       errs() << "Processing instruction: " << inst << '\n';
       for(Use &op : inst.operands())
-        instruction_setequal(inst, *op);
+        instruction_setequal(inst, *op, &inst.getDebugLoc());
       break;
 
     case Instruction::Mul:
@@ -313,19 +332,19 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::SDiv:
     case Instruction::FDiv:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setadditive(inst, multiplier);
+      instruction_setadditive(inst, multiplier, &inst.getDebugLoc());
       break;
 
     case Instruction::Load:
       errs() << "Processing instruction: " << inst << '\n';
       insert_mem(*inst.getOperand(0));
-      instruction_setequal(inst, *inst.getOperand(0), &DimensionalAnalysis::index_mem);
+      instruction_setequal(inst, *inst.getOperand(0), &inst.getDebugLoc(), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::Store:
       errs() << "Processing instruction: " << inst << '\n';
       insert_mem(*inst.getOperand(1));
-      instruction_setequal(*inst.getOperand(1), *inst.getOperand(0), &DimensionalAnalysis::index_mem);
+      instruction_setequal(*inst.getOperand(1), *inst.getOperand(0), &inst.getDebugLoc(), &DimensionalAnalysis::index_mem);
       break;
 
     case Instruction::GetElementPtr: {
@@ -338,17 +357,18 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
     case Instruction::ICmp:
     case Instruction::FCmp:
       errs() << "Processing instruction: " << inst << '\n';
-      instruction_setequal(*inst.getOperand(0), *inst.getOperand(1));
+      instruction_setequal(*inst.getOperand(0), *inst.getOperand(1), &inst.getDebugLoc());
       break;
   }
 }
 
-void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dimens_var &src) {
-  instruction_setequal(dest, src, &DimensionalAnalysis::index);
+void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dimens_var &src,
+    const DebugLoc *loc) {
+  instruction_setequal(dest, src, loc, &DimensionalAnalysis::index);
 }
 
 void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dimens_var &src,
-    DimensionalAnalysis::index_type (DimensionalAnalysis::*indexer)(const dimens_var &)) {
+    const DebugLoc *loc, DimensionalAnalysis::index_type (DimensionalAnalysis::*indexer)(const dimens_var &)) {
   if(src.isa_constant() || dest.isa_constant())
     return;
 
@@ -360,10 +380,10 @@ void DimensionalAnalysis::instruction_setequal(const dimens_var &dest, const dim
   vector<int> equation;
   elem(equation, d) += 1;
   elem(equation, s) += -1;
-  equations.push_back(move(equation));
+  equate(move(equation), loc);
 }
 
-void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int multiplier) {
+void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int multiplier, const DebugLoc *loc) {
   if(is_const(&line))
     return;
 
@@ -389,7 +409,7 @@ void DimensionalAnalysis::instruction_setadditive(llvm::Instruction &line, int m
 
   if(ran) {
     errs() << '\n';
-    equations.push_back(move(equation));
+    equate(move(equation), loc);
   }
 }
 
@@ -455,6 +475,12 @@ DimensionalAnalysis::index_type DimensionalAnalysis::insert(const dimens_var &va
   assert(variables.size() == indices.size());
 
   return ind;
+}
+
+void DimensionalAnalysis::equate(vector<int> &&eqn, const DebugLoc *loc) {
+  equations.push_back(move(eqn));
+  locations.push_back(loc);
+  assert(equations.size() == locations.size());
 }
 
 static RegisterPass<DimensionalAnalysis> dimens("dimens", "Dimensional Analysis", true, true);

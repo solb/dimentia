@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace llvm {
+class DebugLoc;
 class DIVariable;
 class Instruction;
 class StructType;
@@ -54,6 +55,7 @@ private:
   std::vector<dimens_var> variables;
   std::unordered_map<dimens_var, index_type> indices;
   std::vector<std::vector<int>> equations;
+  std::vector<const llvm::DebugLoc *> locations;
   std::vector<int> dimensionless;
   std::vector<int> bad_eqns;
   const TraceVariablesNg *groupings;
@@ -74,16 +76,19 @@ private:
   void getBadEqns();
 
   void instruction_opdecode(llvm::Instruction &);
-  void instruction_setequal(const dimens_var &dest, const dimens_var &src);
   void instruction_setequal(const dimens_var &dest, const dimens_var &src,
-      index_type (DimensionalAnalysis::*indexer)(const dimens_var &));
-  void instruction_setadditive(llvm::Instruction &line, int multiplier);
+      const llvm::DebugLoc *loc = nullptr);
+  void instruction_setequal(const dimens_var &dest, const dimens_var &src,
+      const llvm::DebugLoc *loc, index_type (DimensionalAnalysis::*indexer)(const dimens_var &));
+  void instruction_setadditive(llvm::Instruction &line, int multiplier,
+      const llvm::DebugLoc *loc = nullptr);
 
   int &elem(std::vector<int> &, index_type);
   index_type index_mem(const dimens_var &);
   index_type insert_mem(llvm::Value &);
   index_type index(const dimens_var &);
   index_type insert(const dimens_var &);
+  void equate(std::vector<int> &&, const llvm::DebugLoc *);
 };
 
 #endif
