@@ -307,7 +307,7 @@ void DimensionalAnalysis::getBadEqns() {
       //      TRACE(rem_row _ new_dimensionless.size() _ dimensionless.size());
       vector<int> eliminated;
       set_difference(dimensionless.begin(), dimensionless.end(), new_dimensionless.begin(), new_dimensionless.end(), back_inserter(eliminated));
-      if (count(eliminated.begin(), eliminated.end(), not(is_temporary)))
+      if (count_if(eliminated.begin(), eliminated.end(), not1(is_temporary)))
         bad_eqns.push_back(rem_row);
     }
   }
