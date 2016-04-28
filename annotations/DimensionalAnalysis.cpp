@@ -442,7 +442,8 @@ DimensionalAnalysis::index_type DimensionalAnalysis::insert_mem(Value &gep) {
         IntegerType *point_ty = layout.getIntPtrType(module->getContext(), point->getAddressSpace());
         APInt offset(point_ty->getBitWidth(), 0);
         if(!gep_oper->accumulateConstantOffset(layout, offset))
-          assert(false);
+          return -1; // not a constant
+
         canonical = index_mem(dimens_var(*struct_ty, offset));
       } else
         canonical = index_mem(*gep_oper->getOperand(0));
