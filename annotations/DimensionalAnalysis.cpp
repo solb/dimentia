@@ -7,10 +7,15 @@
 #include <llvm/Support/raw_ostream.h>
 #include <lapacke.h>
 
+#include <map>
+#include <set>
+
 #include "TraceVariablesNg.h"
 
 using namespace llvm;
 using std::min;
+using std::map;
+using std::set;
 using std::move;
 using std::string;
 using std::unordered_set;
@@ -254,7 +259,6 @@ void DimensionalAnalysis::calcDimensionless() {
 
 void DimensionalAnalysis::getBadEqns() {
   int rows = equations.size();
-  int rowsM1 = rows - 1;
   int cols = equations[0].size();
 
   char cN = 'N';
@@ -271,23 +275,34 @@ void DimensionalAnalysis::getBadEqns() {
   bad_eqns.clear();
   vector<int> new_dimensionless;
 
-  for (int rem_row = 0; rem_row < rows; ++rem_row) {
+  map<int, vector<int> > line_to_rows;
+  for (int i = 0; i < rows; ++i) {
+    if (locations[i] && bool(*locations[i]))
+      line_to_rows[ locations[i]->getLine() ].push_back(i);
+  }
+
+  for (auto pairs : line_to_rows) {
     new_dimensionless.clear();
 
-    for (int i = 0, ci = 0; i < rows; ++i, ++ci) {
-      if (i == rem_row) {
-        --ci;
-        continue;
-      }
-      for (int j = 0; j < cols; ++j)
-        A[ci+j*rowsM1] = equations[i][j];
-    }
+    set<int> remove_rows(pairs.second.begin(), pairs.second.end());
+    int rem_num_rows = rows - pairs.second.size();
+    if (rem_num_rows == 0) continue;
 
-    dgesvd_(&cN, &cA, &rowsM1, &cols, A, &rowsM1,
-            sigmas, NULL, &rowsM1, Vt, &ldvt, work, &work_sz, &info);
+    int counter_i = 0;
+    for (int i = 0; i < rows; ++i) {
+      if (!remove_rows.count(i)) {
+        for (int j = 0; j < cols; ++j)
+          A[counter_i+j*rem_num_rows] = equations[i][j];
+        ++counter_i;
+      }
+    }
+    assert(counter_i == rem_num_rows);
+
+    dgesvd_(&cN, &cA, &rem_num_rows, &cols, A, &rem_num_rows,
+            sigmas, NULL, &rem_num_rows, Vt, &ldvt, work, &work_sz, &info);
     assert(info == 0);
 
-    for (int i = min(cols, rowsM1); i < cols; ++i)
+    for (int i = min(cols, rem_num_rows); i < cols; ++i)
       sigmas[i] = 0;
 
     const double eps = 1e-9;
@@ -306,9 +321,12 @@ void DimensionalAnalysis::getBadEqns() {
     if (new_dimensionless != dimensionless) { // maybe size difference at least 2 ?
       //      TRACE(rem_row _ new_dimensionless.size() _ dimensionless.size());
       vector<int> eliminated;
-      set_difference(dimensionless.begin(), dimensionless.end(), new_dimensionless.begin(), new_dimensionless.end(), back_inserter(eliminated));
-      if (count_if(eliminated.begin(), eliminated.end(), not1(is_temporary)))
-        bad_eqns.push_back(rem_row);
+      set_difference(dimensionless.begin(), dimensionless.end(),
+                     new_dimensionless.begin(), new_dimensionless.end(),
+                     back_inserter(eliminated));
+      if (count_if(eliminated.begin(), eliminated.end(), not1(is_temporary))) {
+        bad_eqns.push_back(pairs.second.front()); // mark only one from the line as bad
+      }
     }
   }
 
@@ -355,8 +373,10 @@ void DimensionalAnalysis::instruction_opdecode(Instruction &inst) {
 
     case Instruction::GetElementPtr: {
       errs() << "Processing instruction: " << inst << '\n';
-      if(insert_mem(inst) == -1)
-        assert(false);
+      if(insert_mem(inst) == -1) {
+        //assert(false);
+        // TODO: think about this case, will it break something else?
+      }
       break;
     }
 
