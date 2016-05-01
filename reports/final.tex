@@ -17,7 +17,19 @@
 
 \subsection{Dimensionality}
 
+\cite{hilfinger1988ada} views variables' units of measure as additional type information; as such, it builds a package allowing the programmer to declare general classes of data (e.g. \texttt{DISTANCE} and \texttt{TIME}) as well as specific units (e.g. \texttt{CM} and \texttt{SEC}).
+Variables and constants can then be annotated with these respective bits of metadata.
+The author's package requires the programmer to define data classes' multiplicative relationships, which is done by supplying matricies of coefficients.
+When it encounters an expression in the program, the package retrieves these matrices by looking up the operands' classes by units.
+It then verifies that the program's computations are consistent with this dimensionality information.
+
 \section{Problem}
+
+Although past work in dimensional analysis offers rich semantic checking of programs thanks to its perfect understanding of variables' data classes, this comes with the cost of requiring significant programmer effort.
+Data classes must be explicitly defined and related, and every non-dimensionless variable must be explicitly related to a unit.
+We observe that, while having such detailed information enables very accurate verification, it is possible to perform dimensional analysis without any additional information about the program or its variables.
+This approach shifts the focus from one of directly detecting \textit{correctness} violations to one of finding \textit{consistency} violations: it lacks the information to identify semantic errors when they appear in isolation, but given a larger program, is able to identify conflicting uses of values.
+Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but it's development time that is paramount.
 
 \section{Approach}
 
