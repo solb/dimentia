@@ -1,4 +1,5 @@
 \documentclass[12pt]{article}
+\usepackage{gensymb}
 \usepackage[margin=1in]{geometry}
 
 \title{\Large Dimentia: Detecting Logic Errors with Dimensional Analysis}
@@ -32,6 +33,31 @@ This approach shifts the focus from one of directly detecting \textit{correctnes
 Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but it's development time that is paramount.
 
 \section{Approach}
+
+We define the \textit{degree} of a variable as the exponent on its units; for instance, lengths (often expressed in cm) would have a degree of 1, whereas areas' (often expressed in cm\textsuperscript{2}) would be 2.
+We write $\degree(\tt{x}) = d$ to indicate that the source program variable (or temporary register) \texttt{x} has degree \textit{d}, so if \texttt{l} were a length and \texttt{a} were an area, we might write $\degree(\tt{l}) = 1$ and $\degree(\tt{a}) = 2$.
+In processing a program that provides no information about data classes, we aim to deduce the \textit{relative} degrees of variables based on their actual use in the program.
+This is done by generating a system of linear equations, each member of which corresponds to an arithmetic, comparison, or memory instruction in the host program.
+Here's how we handle basic arithmetic and logic operations:
+\\
+
+\begin{tabular}{l l l}
+\textbf{Instruction} & \textbf{Equation generated} & \textbf{Matrix representation \texttt{\{z, x, y\}}} \\
+\hline \\
+\texttt{z = add x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{1, -1, 0\}, \{1, 0, -1\}}\\
+\texttt{z = sub x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{1, -1, 0\}, \{1, 0, -1\}}\\
+\texttt{z = mul x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) +\ \degree(\tt{y})$ & \texttt{\{1, -1, -1\}} \\
+\texttt{z = div x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) -\ \degree(\tt{y})$ & \texttt{\{1, -1, 1\}} \\
+\texttt{z = cmp x, y} & $\degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{0, 1, -1\}} \\
+\end{tabular}
+\\
+
+\noindent
+At the end of instruction processing, we're left with a single matrix consisting the system of equations relating variables' degrees, and at this point our task is to find out whether each variable was used in an internally consistent manner throughout the program.
+We accomplish this by running an SVD solver on the system: the null space of the resulting matrix tells gives the set of \textit{dimensionless} variables, or those to which no single degree could be assigned.
+The presence of such variables indicates their involvement in multiple arithmetic or logical operations with variables of differing degree, which is likely a logic error.
+The inconsistent instructions can be found by iteratively removing one equation at a time from the matrix and resolving it to see whether any variables disappear from the null space.
+While this process is expensive, it only needs to be performed on those equations that include dimensionless variables.
 
 \section{Evaluation}
 
