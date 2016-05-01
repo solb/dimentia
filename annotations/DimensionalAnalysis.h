@@ -50,9 +50,7 @@ class DimensionalAnalysis : public llvm::ModulePass {
 private:
   typedef std::vector<dimens_var>::size_type index_type;
 
-  llvm::Module *modulmake cf-proposal-full.ll
-../annotations/dimens cf-proposal-full.ll
-e;
+  llvm::Module *module;
   index_type first_temporary;
   std::function<bool (index_type)> is_temporary;
 
