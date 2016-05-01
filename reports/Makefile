@@ -6,6 +6,7 @@ all: $(PDFS)
 
 milestone.pdf: refs.bib
 proposal.pdf: refs.bib
+final.pdf: refs.bib
 
 build/%.aux: %.tex
 	mkdir -p build

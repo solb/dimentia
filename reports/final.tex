@@ -1,6 +1,20 @@
 \documentclass[12pt]{article}
 \usepackage{gensymb}
 \usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{cleveref}
+
+
+\lstset{language=C++,
+  basicstyle=\ttfamily,
+  keywordstyle=\color{blue}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  commentstyle=\color{green}\ttfamily,
+  morecomment=[l][\color{magenta}]{\#},
+  moredelim=**[is][\color{red}]{@}{@}
+}
 
 \title{\Large Dimentia: Detecting Logic Errors with Dimensional Analysis}
 \author{Goran \v{Z}u\v{z}i\'c and Sol Boucher}
@@ -12,27 +26,37 @@
 
 \textit{We present \textnormal{Dimentia}, a system that uses static analysis to detect possible program logic errors related to dimensionality.}
 
+\section{Introduction}
+
+Logical bugs are a big source of programming errors and can be notoriously hard to catch. While there is no hope to detect all logical mistakes in source code, one might hope to design bug detection software to capture a specific type of probable bugs. To this end, we propose a static bug detection technique that uses dimensional analysis to flag possible programmer mistakes.
+
+Examine the C++ source code in \Cref{code:example1}. If we remove the statement ``\texttt{$/ sq\_dist(...)$}'' marked in red, the code contains a dimensional bug. To see the bug, it is important to know that the variables \texttt{v, g} and \texttt{pts[.]} hold 2D points. Let's denote the dimension of the unit distance of this 2D plane as $E$. It can be inferred that the dimension of \texttt{dot\_prod} is $E^2$. Without the statement in red, the dimension of \texttt{alpha} is also $E^2$. But this implies that \texttt{pts[i].x + alpha*v.x} will be adding together variables of dimension $E$ and $E^3$, a clear dimensional bug. The proposed method vows to catch such bugs.
+
+\begin{lstlisting}[label=code:example1,caption=Example of a dimensional bug]
+  double dot_prod = (g.x-pts[i].x)*v.x + (g.y-pts[i].y)*v.y;
+  double alpha = dot_prod @/ sq_dist(v, {0, 0})@;
+  if (...) {
+    Pt cand = {pts[i].x + alpha*v.x, pts[i].y + alpha*v.y};
+    ...
+  }
+\end{lstlisting}
+
+This example from \Cref{code:example1} comes from a competitive-programming event (edited for clarity) and this was the actual bug one of the authors made during the contest. % reference?
+
 \section{Related work}
 
-\subsection{Semantic types}
+Checking dimensional consistency is a classical topic in software analysis. Intermixing physical units with native program code and utilizing dimensionality checking appeared in Ada~\cite{hilfinger1988ada} and Pascal~\cite{dreiheller1986programming, gehani1977units}. The common theme in these approaches is defining a language extension that will associate an expressive physical unit to a variable and then using rule-based inference to catch dimensionality bugs. 
 
-\subsection{Dimensionality}
+For instance, \cite{hilfinger1988ada} builds a package allowing the programmer to declare general classes of data (e.g. \texttt{DISTANCE} and \texttt{TIME}) as well as specific units (e.g. \texttt{CM} and \texttt{SEC}). Variables and constants can then be annotated with these respective bits of metadata. The author's package requires the programmer to define data classes' multiplicative relationships, which is done by supplying matricies of coefficients.
+When it encounters an expression in the program, the package retrieves these matrices by looking up the operands' classes by units. It then verifies that the program's computations are consistent with this dimensionality information.
 
-\cite{hilfinger1988ada} views variables' units of measure as additional type information; as such, it builds a package allowing the programmer to declare general classes of data (e.g. \texttt{DISTANCE} and \texttt{TIME}) as well as specific units (e.g. \texttt{CM} and \texttt{SEC}).
-Variables and constants can then be annotated with these respective bits of metadata.
-The author's package requires the programmer to define data classes' multiplicative relationships, which is done by supplying matricies of coefficients.
-When it encounters an expression in the program, the package retrieves these matrices by looking up the operands' classes by units.
-It then verifies that the program's computations are consistent with this dimensionality information.
+Although past work in dimensional analysis offers rich semantic checking of programs thanks to its perfect understanding of variables' data classes, this comes with the cost of requiring significant programmer effort. Data classes must be explicitly defined and related, and every non-dimensionless variable must be explicitly related to a unit.
 
-\section{Problem}
-
-Although past work in dimensional analysis offers rich semantic checking of programs thanks to its perfect understanding of variables' data classes, this comes with the cost of requiring significant programmer effort.
-Data classes must be explicitly defined and related, and every non-dimensionless variable must be explicitly related to a unit.
 We observe that, while having such detailed information enables very accurate verification, it is possible to perform dimensional analysis without any additional information about the program or its variables.
-This approach shifts the focus from one of directly detecting \textit{correctness} violations to one of finding \textit{consistency} violations: it lacks the information to identify semantic errors when they appear in isolation, but given a larger program, is able to identify conflicting uses of values.
-Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but it's development time that is paramount.
 
-\section{Approach}
+This approach shifts the focus from one of directly detecting \textit{correctness} violations to one of finding \textit{consistency} violations: it lacks the information to identify semantic errors when they appear in isolation, but given a larger program, is able to identify conflicting uses of values. Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but it's development time that is paramount.
+
+\section{Our Approach}
 
 We define the \textit{degree} of a variable as the exponent on its units; for instance, lengths (often expressed in cm) would have a degree of 1, whereas areas' (often expressed in cm\textsuperscript{2}) would be 2.
 We write $\degree(\tt{x}) = d$ to indicate that the source program variable (or temporary register) \texttt{x} has degree \textit{d}, so if \texttt{l} were a length and \texttt{a} were an area, we might write $\degree(\tt{l}) = 1$ and $\degree(\tt{a}) = 2$.
