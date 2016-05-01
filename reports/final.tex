@@ -88,6 +88,38 @@ With all instructions processed and the individual equations produced, we resize
 We then pass this to the LAPACK FORTRAN SVD implementation to obtain the set of dimensionless variables.
 We then use the approach described above, combined with a final consultation of the program's debugging annotations, to identify potentially problematic lines and trace them back to source program locations that should be presented to the user.
 
+\subsection{Limitations}
+
+\textit{Dimentia} presently suffers from a few noteworthy limitations.
+
+\begin{itemize}
+\item \textbf{Unhandled arithmetic operations.}
+We don't generate equations for modulus (remainder) operations or bitwise arithmetic because it's non-obvious what effect these operations have on variables' degree relationships.
+
+\item \textbf{Pointers and pointer arithmetic.}
+While we can handle memory accesses directly into arrays and structures, we don't perform special tracking of pointers or their modification.
+For this reason, performing pointer arithmetic prior to a dereference may produce unexpected results.
+
+\item \textbf{Functions, arguments, and return values.}
+We don't presently track the associations between call sites and functions, arguments, and parameters, or return statements and call evaluations.
+This means that, although we can detect dimensional errors within individual functions, we cannot tell whether a function is misused by client code.
+
+\item \textbf{Platform specificity.}
+The current implementation uses LLVM object addresses as hash codes as part of the process of mapping a value to the matrix column storing information about its degree.
+While this model works without hackery on source variables, temporaries, and arrays---we simply use the address of the corresponding \texttt{DIVariable}, \texttt{Value}, or \texttt{DIVariable} of the entire array, respectively---it requires some tweaking in order to accommodate the cross-sectional lookups necessary for associating the fields of different struct instances.
+To handle this case, we start with the \texttt{StructType} object describing the global definition of that struct type; however, since there are no global LLVM objects corresponding to the individual positions \textit{within} the struct, we cannot simply use an address.
+Instead, we pack the offset into the struct into the top sixteen bits of the address, which works because x86-64 machines have a 64-bit word size but only a 48-bit address bus.
+Of course, other platforms may use these bits of pointers, and in such a case, this approach could result in hash and equality collisions.
+
+\item \textbf{Oversized structure offsets.}
+As stated above, we pack structure offsets into 16 bits, which is likely to be too small for particularly large types.
+
+\item \textbf{Arrays within structures.}
+In order to find the offset into a struct for the purpose of associating an access with the appropriate degree class, we need the offset into that structure to be a compile-time constant.
+Unfortunately, when an array appears within a structure, this is not the case, so we're unable to compute the hash codes for such accesses.
+While it would be possible to compute the partial constants of accesses in order to collapse all accesses within the array element down, this would complicate the code for handling memory operations, and is currently not implemented.
+\end{itemize}
+
 \section{Evaluation}
 
 \section{Results}
