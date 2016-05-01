@@ -5,6 +5,7 @@
 \usepackage{color}
 \usepackage{listings}
 \usepackage{cleveref}
+\usepackage{float}
 
 
 \lstset{language=C++,
@@ -30,7 +31,7 @@
 
 Logical bugs are a big source of programming errors and can be notoriously hard to catch. While there is no hope to detect all logical mistakes in source code, one might hope to design bug detection software to capture a specific type of probable bugs. To this end, we propose a static bug detection technique that uses dimensional analysis to flag possible programmer mistakes.
 
-Examine the C++ source code in \Cref{code:example1}. If we remove the statement ``\texttt{$/ sq\_dist(...)$}'' marked in red, the code contains a dimensional bug. To see the bug, it is important to know that the variables \texttt{v, g} and \texttt{pts[.]} hold 2D points. Let's denote the dimension of the unit distance of this 2D plane as $E$. It can be inferred that the dimension of \texttt{dot\_prod} is $E^2$. Without the statement in red, the dimension of \texttt{alpha} is also $E^2$. But this implies that \texttt{pts[i].x + alpha*v.x} will be adding together variables of dimension $E$ and $E^3$, a clear dimensional bug. The proposed method vows to catch such bugs.
+Examine the C++ source code in \Cref{code:example1}. If we remove the statement ``\texttt{/ sq\_dist(...)}'' marked in red, the code contains a dimensional bug. To see the bug, it is important to know that the variables \texttt{v, g} and \texttt{pts[.]} hold 2D points. Let's denote the dimension of the unit distance of this 2D plane as $E$. It can be inferred that the dimension of \texttt{dot\_prod} is $E^2$. Without the statement in red, the dimension of \texttt{alpha} is also $E^2$. But this implies that \texttt{pts[i].x + alpha*v.x} will be adding together variables of dimension $E$ and $E^3$, a clear dimensional bug. The proposed method vows to catch such bugs.
 
 \begin{lstlisting}[label=code:example1,caption=Example of a dimensional bug]
   double dot_prod = (g.x-pts[i].x)*v.x + (g.y-pts[i].y)*v.y;
@@ -57,35 +58,42 @@ We observe that, while having such detailed information enables very accurate ve
 This approach shifts the focus from one of directly detecting \textit{correctness} violations to one of finding \textit{consistency} violations: it lacks the information to identify semantic errors when they appear in isolation, but given a larger program, is able to identify conflicting uses of values. Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but it's development time that is paramount.
 
 \section{Our Approach}
+\label{sec:approach}
 
-We define the \textit{degree} of a variable as the exponent on its units; for instance, lengths (often expressed in cm) would have a degree of 1, whereas areas' (often expressed in cm\textsuperscript{2}) would be 2.
-We write $\degree(\tt{x}) = d$ to indicate that the source program variable (or temporary register) \texttt{x} has degree \textit{d}, so if \texttt{l} were a length and \texttt{a} were an area, we might write $\degree(\tt{l}) = 1$ and $\degree(\tt{a}) = 2$.
-In processing a program that provides no information about data classes, we aim to deduce the \textit{relative} degrees of variables based on their actual use in the program.
-This is done by generating a system of linear equations, each member of which corresponds to an arithmetic, comparison, or memory instruction in the host program.
-Here's how we handle basic arithmetic and logic operations:
-\\
+In order to associate a dimension with a variable (or more generally, a semantic type), we define the scalar \textit{degree} of a semantic type as the sum of exponents on its units; for instance, lengths (often expressed in meters) would have a degree of $1$, areas' (often expressed in meters squared) would be $2$ and acceleration (often expressed in meters per seconds square, $[m s^{-2}]$) would be $-1$.
 
-\begin{tabular}{l l l}
-\textbf{Instruction} & \textbf{Equation generated} & \textbf{Matrix representation \texttt{\{z, x, y\}}} \\
-\hline \\
-\texttt{z = add x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{1, -1, 0\}, \{1, 0, -1\}}\\
-\texttt{z = sub x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{1, -1, 0\}, \{1, 0, -1\}}\\
-\texttt{z = mul x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) +\ \degree(\tt{y})$ & \texttt{\{1, -1, -1\}} \\
-\texttt{z = div x, y} & $\degree(\tt{z}) =\ \degree(\tt{x}) -\ \degree(\tt{y})$ & \texttt{\{1, -1, 1\}} \\
-\texttt{z = cmp x, y} & $\degree(\tt{x}) =\ \degree(\tt{y})$ & \texttt{\{0, 1, -1\}} \\
-\end{tabular}
-\\
+We write $\degree(\tt{x}) = d$ to indicate that the type associated with the source program variable (or temporary register) \texttt{x} has degree \textit{d}, so if \texttt{l} were a length and \texttt{a} were an area, we might write $\degree(\tt{l}) = 1$ and $\degree(\tt{a}) = 2$.
+In processing a program that provides no information about data classes, we aim to deduce the degrees of variables based on their actual use in the program.
 
-\noindent
-At the end of instruction processing, we're left with a single matrix consisting the system of equations relating variables' degrees, and at this point our task is to find out whether each variable was used in an internally consistent manner throughout the program.
-We accomplish this by running an SVD solver on the system: the null space of the resulting matrix tells gives the set of \textit{dimensionless} variables, or those to which no single degree could be assigned.
-The presence of such variables indicates their involvement in multiple arithmetic or logical operations with variables of differing degree, which is likely a logic error.
-The inconsistent instructions can be found by iteratively removing one equation at a time from the matrix and resolving it to see whether any variables disappear from the null space.
-While this process is expensive, it only needs to be performed on those equations that include dimensionless variables.
+This is done by establishing consistency rules that must be satisfied when a mathematical operation is applied between variables. For instance, an instruction $z := x + y$ only makes sense if $\degree{\tt{z}} = \degree{\tt{x}} = \degree{\tt{y}}$. The implemented list of rules is shown in \Cref{table:dimensional-rules}.
+
+\begin{table}[H]
+  \centering
+  \setlength{\tabcolsep}{20pt}
+  \begin{tabular}{c | c}
+    \textbf{Instruction} & \textbf{Equation generated} \\
+    \hline
+    $z := x + y$ & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ \\
+    $z := x - y$ & $\degree(\tt{z}) =\ \degree(\tt{x}) =\ \degree(\tt{y})$ \\
+    $z := x \cdot y$ & $\degree(\tt{z}) =\ \degree(\tt{x}) +\ \degree(\tt{y})$ \\
+    $z := x / y$ & $\degree(\tt{z}) =\ \degree(\tt{x}) -\ \degree(\tt{y})$ \\
+    $x < y$ & $\degree(\tt{x}) =\ \degree(\tt{y})$ \\
+  \end{tabular}
+  \caption{Rules for degree consistency}
+  \label{table:dimensional-rules}
+\end{table}
+
+Note that each of rules is essentially a linear equation between the arguments' degrees. At the end of instruction processing, we are left with a single matrix consisting the system of equations relating variables' degrees, and at this point our task is to find out whether each variable was used in an internally consistent manner throughout the program.
+
+By denoting the matrix by $A$ and the list of degrees by $x$, our consistency rules furnish a linear system $Ax = 0$. Note that the system is homogenous, so $x = 0$ is always a valid (consistent) solution. In order to identify a potential bug, we define a \textbf{dimensionless type}, a type that can not have a non-zero degree without violating the constraints. For instance, a instruction of the form $z = z \cdot a$ would imply that the type of $a$ is dimensionless (must have degree 0).
+
+The presence of such variables (with dimensionless types) indicates there is no consistent way to assign a nontrivial unit to them, thereby indicating a possible logic error.
+
+While the described approach can help us find potentially inconsistent variables, it doesn't directly help up pinpoint the locations of possible bugs in the program. To this end, we flag a source code line as potentially unconsistent if removing it from the program would reduce the numebr of dimensionless types.
 
 \subsection{Implementation}
 
-\textit{Dimentia} is implemented as an LLVM 3.7 analysis pass; as such, it is invoked using the framework's \texttt{opt} optimization utility and can accept either LLVM IR assembly code or an LLVM bitcode object.
+We created the tool \textit{Dimentia} that follows the approach described in \Cref{sec:approach}. It is implemented as an LLVM 3.7 analysis pass; as such, it is invoked using the framework's \texttt{opt} optimization utility and can accept either LLVM IR assembly code or an LLVM bitcode object.
 The decision to implement as a pass rather than as part of the language frontend was made to keep it language-agnostic.
 In fact, since our method doesn't require programmer annotations, it should be possible to run it unmodified on programs compiled by any LLVM frontend, regardless of source language (although we've only tested with Clang).
 However, since our aim is to detect errors in the source program, we must be able relate registers back to their high-level variables and map instructions to the source lines that generated them; for this, we use debugging annotations generated by the frontend, and require that the user has compiled in debug mode.
@@ -108,9 +116,13 @@ For arrays, we make the assumption that the same sort of data is stored througho
 For structured types, the semantic relationship is cross-sectional, and we define the class of a particular element as that same element of any instance of the same struct.
 These column redirections are stored in a separate table that is consulted only when processing the pointer operand of \texttt{load} and \texttt{store} instructions.
 
-With all instructions processed and the individual equations produced, we resize each by adding zeroes at the end until the system forms a non-ragged matrix.
-We then pass this to the LAPACK FORTRAN SVD implementation to obtain the set of dimensionless variables.
-We then use the approach described above, combined with a final consultation of the program's debugging annotations, to identify potentially problematic lines and trace them back to source program locations that should be presented to the user.
+With all instructions processed and the individual equations produced, we resize each by adding zeroes at the end until the system forms a non-ragged matrix. We now describe the implementation of detecting dimensionless variables. If we denote the matrix as $A$ and the degree vector as $x$, we have a homogenous linear system $Ax = 0$. Thus, every element of the nullspace $N(A)$ is a valid assignment to the degree vector $x$. Hence in order to find a variable at index $i$ that is dimensionless, we have to check if every vector of the nullspace has a $0$ at the index $i$. Note that it is sufficient to check any spanning set of vectors of the nullspace for that condition.
+
+We are left with finding a spanning set for the nullspace. But this can be straightforwardly achieved via a singular value decomposition (SVD). We used the SVD implementation given in Lapack 3. This concludes the our method of flagging dimensionless variables.
+
+The final ingredient in our approach, identification of potentially non-consistent source lines is done in a straightforward manner: for each source line we remove all the linear equations generated by that source line and re-run the analysis. If the number of dimensionless types decreases, we flag the line.
+
+We then use the approach described above, combined with a final consultation of the program's debugging annotations, to identify potentially variables and problematic lines and trace them back to source program locations that should be presented to the user.
 
 \subsection{Limitations}
 
