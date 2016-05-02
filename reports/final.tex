@@ -19,10 +19,18 @@
 
 \begin{document}
 \maketitle
+\pagenumbering{gobble}% Remove page numbers (and reset to 1)
 
+
+\begin{center}
 \section*{Abstract}
+\parbox{0.8\linewidth}{\textit{We present \textnormal{Dimentia}, a system that uses static analysis to detect possible program logic errors related to dimensionality mismatches.
+Unlike prior work, the system is completely autonomous - it doesn't require any software modifications to use.
+We showcase its usability in finding logical bugs by presenting a small case study using examples stemming from competitive programming.}}
+\end{center}
 
-\textit{We present \textnormal{Dimentia}, a system that uses static analysis to detect possible program logic errors related to dimensionality.}
+\newpage
+\pagenumbering{arabic}% Arabic page numbers (and reset to 1)
 
 \section{Introduction}
 
@@ -226,8 +234,13 @@ The value is calculated by multiplying the number of ways its substructures can 
 Hence the value is definitely dimensionless (can not have a unit associated with it).
 The reported variable/line is dimensionless, but it does not correspond to a bug.
 
-
 \section{Conclusion}
+
+\section{Distribution of Credit}
+\begin{description}
+  \item[Goran] 50\%
+    \item[Sol] 50\%
+\end{description}
 
 \bibliographystyle{abbrv}
 \bibliography{refs}
