@@ -11,9 +11,6 @@
 \lstset{language=C++,
   basicstyle=\ttfamily,
   keywordstyle=\color{blue}\ttfamily,
-  stringstyle=\color{red}\ttfamily,
-  commentstyle=\color{green}\ttfamily,
-  morecomment=[l][\color{magenta}]{\#},
   moredelim=**[is][\color{red}]{@}{@}
 }
 
@@ -158,13 +155,79 @@ While it would be possible to compute the partial constants of accesses in order
 
 \section{Evaluation}
 
-We evaluated the tool on a set of source codes stemming from competitive programming. Some of the examples were hand picked and other were randomly selected. The codes had between ? and ? lines of code
+We evaluated the tool on a set of source codes stemming from competitive programming. Some of the examples were hand picked and other were randomly selected. The codes had between 53 and 200 lines of C++ or C code. The results are depicted in \Cref{table:eval-results}.
 
-\section{Results}
+\begin{table}[H]
+  \scalebox{0.9}{
+  \begin{tabular}{c c c c c c}
+    \textbf{Name} & \textbf{SLOC (IR)} & \textbf{Runtime} & \textbf{Flagged variables} & \textbf{Flagged lines} & \textbf{Known bugs} \\
+    \hline
+    \texttt{cf-1.cpp} & 53 (3059) & 0.139s & 0 & 0 & No \\
+    \texttt{cf-2.cpp} & 77 (3896) & 1.175s & 1 & 1 & No \\
+    \texttt{cf-3.cpp} & 200 (11350) & 4m14s & 0 & 0 & No \\
+    \texttt{quadrilateral.c} & 107 (561) & 0.040s & 4 & 3 & Yes \\
+    \texttt{proposal-full.cpp} & 88 (4522) & 4.622s & 10 & 4 & Yes \\
+  \end{tabular}
+  }
+  \caption{Evaluation results}
+  \label{table:eval-results}
+\end{table}
+
+Here we present a small case study of the various cases we encountered in the code.
+
+Our first example is a 107 SLOC hand-written program that does various area computation.
+At one point, we pureposely made an error in the error calculation code.
+Our tool flags three lines in total, two of which are depicted in the following listing.
+There is no way to actually differentiate between which line is the errornous one as the
+only thing our tool can infer is their inconsistency.
+In sum, our tool can help find the bug in this
+particular case as it clearly points to a buggy line.
+
+\begin{lstlisting}[label=quadrilateral.c]
+  if(shape == SHAPE_RECTANGLE) {
+    @area = param[0] * param[1];@
+  } else { // shape == SHAPE_SQUARE
+    @area = param[0] + param[0];@
+  }
+\end{lstlisting}
+
+In the introduction we had an (edited) code excerpt from \texttt{proposal-full.cpp},
+a real programming contest solution with a bug.
+Its full version is shown below.
+Variable \texttt{pts[]} and \texttt{gmid} are 2D points with fields \texttt{.x, .y}.
+Our tool flagged four lines in total, two of them are shown in red and the two other
+two are false positives related to the propagation of dimensionless variables throughout the code.
+The two flagged lines indicate that if we assume that points have a degree $d$,
+then \texttt{alpha} should have degree $2d$ and \texttt{pts[pi].x + alpha*v.x} would
+be adding together variables of degree $d$ and $3d$, implying $d = 0$.
+In this case, our tool's output is nearly perfect and would immensly help us find the bug.
+
+\begin{lstlisting}[label=proposal-full.cpp]
+  Pt v = {pts[pj].x - pts[pi].x, pts[pj].y - pts[pi].y};
+  @double alpha = (gmid.x-pts[pi].x)*v.x + (gmid.y-pts[pi].y)*v.y;@
+  if (alpha >= -eps && alpha <= 1+eps) {
+    @Pt cand = {pts[pi].x + alpha*v.x, pts[pi].y + alpha*v.y};@
+    double sum = 0;
+    REP(gi, ng) sum += get_sq_dist(gens[gi], cand);
+    ans = min(ans, sum);
+  }  
+\end{lstlisting}
+
+In the source file \textbf{cf-2.cpp} we encounter the next code segment:
+\begin{lstlisting}[label=cf-2.cpp]
+  if (ccw(pts[i], pts[k], pts[j]) > 0) {
+    @dp[i][j] += dp[i][k] * dp[k][j];@
+    dp[i][j] %= mod;
+  }
+\end{lstlisting}
+the line in red is flagged.
+The \texttt{dp}-array represents the number of objects that that can be constructed with some kind of recursive structure.
+The value is calculated by multiplying the number of ways its substructures can be constructed.
+Hence the value is definitely dimensionless (can not have a unit associated with it).
+The reported variable/line is dimensionless, but it does not correspond to a bug.
+
 
 \section{Conclusion}
-
-\section{Future work}
 
 \bibliographystyle{abbrv}
 \bibliography{refs}
