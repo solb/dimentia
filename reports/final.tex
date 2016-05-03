@@ -271,6 +271,17 @@ The reported variable/line is dimensionless, but it does not correspond to a bug
 
 \section{Conclusion}
 
+Our experience with \textit{Dimentia} demonstrates that this dimensional inference technique works surprisingly well.
+It very effectively discovers most dimensional bugs and the reporting makes it very easy to find and fix the cause of such errors.
+Moreover, after changing our handling of \texttt{Constant}s and equations that only eliminate dimensionless temporaries, the only false positives we've encountered have been in programs that make use of dynamic programming.
+
+\section{Future work}
+
+In order to create a tool that would be suitable for use in production, the limitations discussed earlier would need to be addressed.
+It may also be desirable to be able to check across compilation units: especially if support for function argument and return value checking were implemented, this would allow inference of the relationship between these quantities even when functions were implemented in a different module of a codebase than they were used.
+Another barrier to adoption is the system's runtime on large programs or those with multiple template specializations.
+Fixing this may require a smarter method of pinpointing the lines responsible for dimensionality bugs (instead of the current approach of iteratively removing equations).
+
 \section{Distribution of Credit}
 \begin{description}
   \item[Goran] 50\%
