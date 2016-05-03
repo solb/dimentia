@@ -183,7 +183,7 @@ The current implementation uses LLVM object addresses as hash codes as part of t
 While this model works without hackery on source variables, temporaries, and arrays---we simply use the address of the corresponding \texttt{DIVariable}, \texttt{Value}, or \texttt{DIVariable} of the entire array, respectively---it requires some tweaking in order to accommodate the cross-sectional lookups necessary for associating the fields of different struct instances.
 To handle this case, we start with the \texttt{StructType} object describing the global definition of that struct type; however, since there are no global LLVM objects corresponding to the individual positions \textit{within} the struct, we cannot simply use an address.
 Instead, we pack the offset into the struct into the top sixteen bits of the address, which works because x86-64 machines have a 64-bit word size but only a 48-bit address bus.
-Of course, other platforms may use these bits of pointers, and in such a case, this approach could result in hash and equality collisions.
+Of course, other platforms may use these address bits, and in such a case, this approach could result in hash and equality collisions.
 
 \item \textbf{Oversized structure offsets.}
 As stated above, we pack structure offsets into 16 bits, which is likely to be too small for particularly large types.
@@ -196,9 +196,9 @@ While it would be possible to compute the partial constants of accesses in order
 
 \section{Evaluation}
 
-We evaluated the tool on a set of source codes stemming from competitive programming.
-Some of the examples were hand picked and other were randomly selected.
-The codes had between 53 and 200 lines of C++ or C code.
+We evaluated the tool on several programs that were written for programming competitions.
+Some of the examples were hand-picked; others were randomly selected.
+Each code sample had between 53 and 200 lines of C++ or C code.
 The results are depicted in \Cref{table:eval-results}.
 
 \begin{table}[H]
@@ -206,11 +206,11 @@ The results are depicted in \Cref{table:eval-results}.
   \begin{tabular}{c c c c c c}
     \textbf{Name} & \textbf{SLOC (IR)} & \textbf{Runtime} & \textbf{Flagged variables} & \textbf{Flagged lines} & \textbf{Known bugs} \\
     \hline
+    \texttt{quadrilateral.c} & 107 (561) & 0.040s & 4 & 3 & Yes \\
+    \texttt{proposal-full.cpp} & 88 (4522) & 4.622s & 10 & 4 & Yes \\
     \texttt{cf-1.cpp} & 53 (3059) & 0.139s & 0 & 0 & No \\
     \texttt{cf-2.cpp} & 77 (3896) & 1.175s & 1 & 1 & No \\
     \texttt{cf-3.cpp} & 200 (11350) & 4m14s & 0 & 0 & No \\
-    \texttt{quadrilateral.c} & 107 (561) & 0.040s & 4 & 3 & Yes \\
-    \texttt{proposal-full.cpp} & 88 (4522) & 4.622s & 10 & 4 & Yes \\
   \end{tabular}
   }
   \caption{Evaluation results}
@@ -222,10 +222,9 @@ Here we present a small case study of the various cases we encountered in the co
 Our first example is a 107 SLOC hand-written program that does various area computation.
 At one point, we purposely made an error in the error calculation code.
 Our tool flags three lines in total, two of which are depicted in the following listing.
-There is no way to actually differentiate between which line is the error nous one, as the
+There is no way to actually decide which line is the erroneous one, as the
 only thing our tool can infer is their inconsistency.
-In sum, our tool can help find the bug in this
-particular case as it clearly points to a buggy line.
+\textit{Dimentia} makes it easy to find this particular bug thanks to the set of lines it outputs.
 
 \begin{lstlisting}[label=quadrilateral.c]
   if(shape == SHAPE_RECTANGLE) {
@@ -238,9 +237,9 @@ particular case as it clearly points to a buggy line.
 In the introduction we had an (edited) code excerpt from \texttt{proposal-full.cpp},
 a real programming contest solution with a bug.
 Its full version is shown below.
-Variable \texttt{pts[]} and \texttt{gmid} are 2D points with fields \texttt{.x, .y}.
-Our tool flagged four lines in total, two of them are shown in red and the two other
-two are false positives related to the propagation of dimensionless variables throughout the code.
+Variables \texttt{pts[]} and \texttt{gmid} are 2-D points with fields \texttt{.x} and \texttt{.y}.
+Our tool highlights four lines in total, two of which are shown in red below.
+(The other two are false positives related to the propagation of dimensionless variables throughout the code.)
 The two flagged lines indicate that if we assume that points have a degree $d$,
 then \texttt{alpha} should have degree $2d$ and \texttt{pts[pi].x + alpha*v.x} would
 be adding together variables of degree $d$ and $3d$, implying $d = 0$.
@@ -264,11 +263,10 @@ In the source file \textbf{cf-2.cpp} we encounter the next code segment:
     dp[i][j] %= mod;
   }
 \end{lstlisting}
-the line in red is flagged.
+The line in red is flagged.
 The \texttt{dp} array represents the number of objects that that can be constructed with some kind of recursive structure.
-The value is calculated by multiplying the number of ways its substructures can be constructed.
-Hence the value is definitely dimensionless (can not have a unit associated with it).
-The reported variable/line is dimensionless, but it does not correspond to a bug.
+Since this value is calculated by multiplying the number of ways its substructures can be constructed, it is definitely dimensionless (can not have a unit associated with it).
+The reported variable/line is dimensionless, but it does not correspond to a bug; we expect other instances of dynamic programming problems to trigger similar false positives.
 
 \section{Conclusion}
 
