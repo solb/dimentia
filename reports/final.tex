@@ -79,7 +79,7 @@ We observe that, while having such detailed information enables very accurate ve
 This approach shifts the focus from one of directly detecting \textit{correctness} violations to one of finding \textit{consistency} violations: it lacks the information to identify semantic errors when they appear in isolation, but given a larger program, is able to identify conflicting uses of values.
 Moreover, because no additional labor is imposed on the programmer, such a system is more likely to be used, especially in situations such as competitive programming, where rapid detection of bugs is important but development time that is paramount.
 
-\section{Our Approach}
+\section{Our approach}
 \label{sec:approach}
 
 In order to associate a dimension with a variable (or more generally, a semantic type), we define the scalar \textit{degree} of a semantic type as the sum of exponents on its units; for instance, lengths' (often expressed in meters) degree would be $1$, areas' (often expressed in meters squared) would be $2$ and accelerations' (often expressed in meters per seconds square, $[m s^{-2}]$) would be $-1$.
@@ -282,7 +282,7 @@ It may also be desirable to be able to check across compilation units: especiall
 Another barrier to adoption is the system's runtime on large programs or those with multiple template specializations.
 Fixing this may require a smarter method of pinpointing the lines responsible for dimensionality bugs (instead of the current approach of iteratively removing equations).
 
-\section{Distribution of Credit}
+\section{Distribution of credit}
 \begin{description}
   \item[Goran] 50\%
     \item[Sol] 50\%
