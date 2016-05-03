@@ -1,0 +1,44 @@
+=====================================
+Dimentia: Static dimensional analysis
+Sol Boucher and Goran Žužić
+=====================================
+
+Dependencies
+============
+You need the following Debian packages, or your distribution's equivalents:
+ - clang-3.7      (Tested with version 1:3.7-1-2 on stretch)
+ - llvm-3.7       (Tested with version 1:3.7-1-2 on stretch)
+ - liblapacke-dev (Tested with version 3.6.0-2 on stretch)
+
+Building
+========
+First you need to build the tracevarsng and dimens LLVM analysis passes:
+ $ cd annotations/
+ $ make
+
+The tracevarsng and dimens wrapper script in that same directory make it easier to run the passes: simply pass these scripts a .ll or .bc file.
+
+Now try it out on some of our example programs:
+ $ cd tests/
+ $ make
+ $ ../annotations/dimens annot0.ll
+  <snip>
+  Found 2 dimensionless variables:
+  main::opnd
+  main::sum
+
+  Suggest inspecting the following source locations:
+  annot0.c:6:9
+  annot0.c:7:10
+ $ ../annotations/dimens annot1.ll
+ <snip>
+ Found 2 dimensionless variables:
+ main::opnd
+ sum
+
+ Suggest inspecting the following source locations:
+ annot1.c:7:9
+ annot1.c:8:10
+
+Running on other programs is quite easy; just be sure to compile them with the clang options -S and --emit-llvm in order to generate .ll (LLVM intermediate) files.
+Then run dimens on the output files as usual.
