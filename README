@@ -40,5 +40,6 @@ Now try it out on some of our example programs:
  annot1.c:7:9
  annot1.c:8:10
 
-Running on other programs is quite easy; just be sure to compile them with the clang options -S and --emit-llvm in order to generate .ll (LLVM intermediate) files.
+Running on other programs is quite easy; just be sure to compile them with the clang options -S, --emit-llvm, and -g in order to generate .ll (LLVM intermediate) files.
+We also running through opt with the -mem2reg option, which will speed up the analysis considerably.
 Then run dimens on the output files as usual.
